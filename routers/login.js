@@ -24,6 +24,15 @@ router.get('/api/user/logout/:sessionId', function *() {
     client.del(REDIS_SESSION_PREFIX + this.params.sessionId);
 });
 
+/**
+ * @api {get} /api/user/login/:code 登录
+ * @apiName login
+ * @apiGroup Login
+ *
+ * @apiParam {String} code 微信获取的code.
+ *
+ * @apiSuccess {String} sessionId 服务器sessionId.
+ */
 router.get('/api/user/login/:code', function* () {
     let code = this.params.code;
 

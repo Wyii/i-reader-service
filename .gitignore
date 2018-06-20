@@ -13,3 +13,4 @@ public/app/
 config/default.json
 /public/temp/
 package-lock.json
+public/doc/

@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "doc": "apidoc -i routers/ -o public/doc",
     "start": "node server.js"
   },
   "author": "cce",
@@ -23,5 +24,8 @@
     "redis": "^2.6.5",
     "request": "^2.87.0",
     "request-promise": "^4.2.1"
+  },
+  "devDependencies": {
+    "apidoc": "^0.17.6"
   }
 }

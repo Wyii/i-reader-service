@@ -14,7 +14,7 @@ server.use(function *(next) {
 });
 server.use(require('koa-static-server')({
     rootDir: 'public',
-    rootPath: '/static',
+    rootPath: '/public',
     maxage: 10000000
 }));
 
