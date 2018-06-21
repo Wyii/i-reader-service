@@ -23,7 +23,8 @@
     "node-uuid": "^1.4.7",
     "redis": "^2.6.5",
     "request": "^2.87.0",
-    "request-promise": "^4.2.1"
+    "request-promise": "^4.2.1",
+    "elasticsearch": "^11.0.1"
   },
   "devDependencies": {
     "apidoc": "^0.17.6"

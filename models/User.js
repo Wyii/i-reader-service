@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoConnection = require('../common/MongoConnection');
 const UserSchema = new mongoose.Schema({
     openId: String,
     sessionKey: String,
@@ -13,5 +14,5 @@ const UserSchema = new mongoose.Schema({
     createdDate: Date,
     lastLoginDate: Date
 });
-
-module.exports = mongoose.model('User', UserSchema);
+// module.exports = mongoose.boomMobileDB.model('User', UserSchema);
+module.exports = mongoConnection.getBoomMobileDB().model('User', UserSchema);

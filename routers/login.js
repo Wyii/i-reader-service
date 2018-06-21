@@ -16,11 +16,18 @@ function* login(openId) {
     return sessionId;
 }
 
-router.get('/test', function *() {
+/**
+ * @api {get} /test 测试
+ * @apiName test
+ * @apiGroup Login
+ * @apiSuccessExample {json} Success-Response:
+ * {status:true}
+*/
+router.get('/test', function* () {
     this.body = { status: true };
 });
 
-router.get('/api/user/logout/:sessionId', function *() {
+router.get('/api/user/logout/:sessionId', function* () {
     client.del(REDIS_SESSION_PREFIX + this.params.sessionId);
 });
 
@@ -30,8 +37,8 @@ router.get('/api/user/logout/:sessionId', function *() {
  * @apiGroup Login
  *
  * @apiParam {String} code 微信获取的code.
- *
- * @apiSuccess {String} sessionId 服务器sessionId.
+ * @apiSuccessExample {json} Success-Response:
+ * { sessionId: sessionId  }
  */
 router.get('/api/user/login/:code', function* () {
     let code = this.params.code;
@@ -41,7 +48,7 @@ router.get('/api/user/login/:code', function* () {
         return;
     }
 
-    let getOpenIdUrl = `https://api.weixin.qq.com/sns/jscode2session?appid=${ config.get('weixin.appId') }&secret=${ config.get('weixin.appSecret') }&js_code=${ code }&grant_type=authorization_code`;
+    let getOpenIdUrl = `https://api.weixin.qq.com/sns/jscode2session?appid=${config.get('weixin.appId')}&secret=${config.get('weixin.appSecret')}&js_code=${code}&grant_type=authorization_code`;
     let jsonStr = yield rp(getOpenIdUrl);
     let json = JSON.parse(jsonStr);
 
@@ -56,7 +63,7 @@ router.get('/api/user/login/:code', function* () {
 
     let user = yield User.findOne({ openId: openId });
     if (!user) {
-        yield new User({ openId, sessionKey, unionId, createdDate: moment(), lastLoginDate: moment()}).save();
+        yield new User({ openId, sessionKey, unionId, createdDate: moment(), lastLoginDate: moment() }).save();
     }
 
     let sessionId = yield login(openId);

@@ -8,7 +8,10 @@ module.exports = function (server) {
     const login = require('./login');
     server.use(login.routes()).use(login.allowedMethods());
 
-    server.use(function *(next) {
+    const project = require('./project');
+    server.use(project.routes()).use(login.allowedMethods());
+
+    server.use(function* (next) {
         try {
             let headers = this.headers;
             let sessionId = headers.sessionid;
@@ -22,9 +25,9 @@ module.exports = function (server) {
                 this.openId = openId;
                 yield next;
             } else {
-                this.body = { errmsg: '用户登录状态过期,请重新登录', errcode: 10000  };
+                this.body = { errmsg: '用户登录状态过期,请重新登录', errcode: 10000 };
             }
-        }catch(e) {
+        } catch (e) {
             console.log(e);
         }
     });
