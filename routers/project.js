@@ -1,6 +1,7 @@
 'use strict';
 const router = require('koa-router')();
 const Project = require('../models/Project');
+const ProjectText = require('../models/ProjectText');
 const fileUrlUtil = require('../common/FileUrlUtil');
 const ESClientFactory = require('../common/ESClientFactory');
 const parse = require('co-body');
@@ -19,7 +20,7 @@ const REDIS_SESSION_PREFIX = Utils.REDIS_SESSION_PREFIX;
  * @apiGroup Project
  *
  * @apiSuccessExample {json} Success-Response:
- * []
+ * [{}]
  */
 router.get('/api/project/list', function* () {
     let page = parseInt(this.query.page) || 1;
@@ -140,7 +141,8 @@ router.get('/api/project/list', function* () {
  * @apiName toggleCollect
  * @apiGroup Project
  *
- * @apiParam {JSON} data {id:'文章id',openId:'用户opendId'}
+ * @apiParamExample {JSON} Request-Example:
+ * {id:'文章id',openId:'用户opendId'}
  *
   * @apiSuccessExample {json} Success-Response:
  * {operator:'add'} / {operator:'cancel'}
@@ -174,8 +176,8 @@ router.post('/api/project/toggleCollect', function *() {
  * @apiName toggleCollect
  * @apiGroup Project
  *
- * @apiParam {JSON} data {openId:'用户opendId'}
- *
+ * @apiParamExample {JSON} Request-Example:
+ * {openId:'用户opendId'}
  * @apiSuccessExample {json} Success-Response:
  * []
  */
@@ -258,6 +260,45 @@ router.get('/api/project/collections', function* () {
     // projectList = yield queryProjectListFeedAndChannel(projectList);
 
     this.body = projectList;
+});
+
+/**
+ * @api {get} /api/project/detail/:id 文章详情
+ * @apiName project detail
+ * @apiGroup Project
+ *
+ * @apiParam {String} id 文章id.
+ * @apiSuccessExample {json} Success-Response:
+ * {}
+ */
+router.get('/api/project/detail/:id', function *() {
+    let id = this.params.id;
+    let project;
+    project = yield Project.findOne({_id: id, isDel: 0}, {
+        originViews: 0,
+        originLikes: 0,
+        originForwards: 0,
+        originShares: 0
+    });
+    if(!project) {
+        this.body = {};
+        return;
+    }
+    let json = project.toObject();
+
+    //TODO 这里后续会移除
+    // let openId = yield client.getAsync(REDIS_SESSION_PREFIX + headers.sessionid);
+    // let collection = yield ProjectCollect.findOne({_id: openId +'#' + project._id});
+
+    // json.collection = {
+    //     isCollected: collection? true: false,
+    //     tags: (collection && collection.tags) || []
+    // };
+
+    let text = yield ProjectText.findOne({_id: project._id});
+    json.text = text && text.text;
+
+    this.body = json;
 });
 
 module.exports = router;
