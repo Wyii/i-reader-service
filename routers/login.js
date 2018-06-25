@@ -17,7 +17,7 @@ function* login(openId) {
 }
 
 /**
- * @api {get} /test 测试
+ * @api {get} /test login
  * @apiName test
  * @apiGroup Login
  * @apiSuccessExample {json} Success-Response:
@@ -32,7 +32,7 @@ router.get('/api/user/logout/:sessionId', function* () {
 });
 
 /**
- * @api {get} /api/user/login/:code 登录
+ * @api {get} /api/user/login/:code login
  * @apiName login
  * @apiGroup Login
  *
@@ -72,5 +72,7 @@ router.get('/api/user/login/:code', function* () {
     this.body = { sessionId: sessionId };
 
 });
+
+
 
 module.exports = router;

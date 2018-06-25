@@ -31,4 +31,7 @@ module.exports = function (server) {
             console.log(e);
         }
     });
+
+    const user = require('./user');
+    server.use(user.routes()).use(use.allowedMethods());
 };
