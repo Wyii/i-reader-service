@@ -10,7 +10,7 @@ common/actions/
 .env
 public/app/
 /test.js
-config/default.json
+/config/default.json
 /public/temp/
 package-lock.json
 public/doc/
