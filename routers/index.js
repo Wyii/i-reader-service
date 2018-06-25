@@ -33,5 +33,5 @@ module.exports = function (server) {
     });
 
     const user = require('./user');
-    server.use(user.routes()).use(use.allowedMethods());
+    server.use(user.routes()).use(user.allowedMethods());
 };
