@@ -37,34 +37,6 @@ router.get('/api/project/list', function* () {
     let query = { filtered: filtered };
     let sort = [];
 
-    if (this.query.channel) {
-        let channel = yield Channel.findOne({ _id: this.query.channel });
-        if (!channel || (channel.open != 1 && _.indexOf(this.session.account.tenancies, channel.tenancy) == -1)) {
-            this.body = [];
-            return;
-        }
-        if (channel.level != 1) {
-            mustFilter.push({ term: { channel: this.query.channel } });
-        } else {
-            let channels = yield Channel.find({ parent: channel._id }, { _id: 1 });
-            if (channels.length == 0) {
-                mustFilter.push({ term: { channel: this.query.channel } });
-            } else {
-                mustFilter.push({ terms: { channel: channels.map(c => c._id) } });
-                // mustFilter.push({
-                //     bool: { should: channels.map(channel => { return { term: { channel: channel._id } } }) }
-                // });
-            }
-        }
-
-        for (let k in this.query) {
-            if (k.startsWith('p:')) {
-                mustFilter.push({ term: { ["parameters." + k.substring(2)]: this.query[k] } });
-            }
-        }
-    }
-
-
     if (this.query.feed) {
         let feedId = this.query.feed;
         let feedIdList;
