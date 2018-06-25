@@ -5,4 +5,4 @@ const FeedSchema = new mongoose.Schema({
     themes: []
 });
 // module.exports = mongoose.boomMobileDB.model('User', UserSchema);
-module.exports = mongoConnection.getBoomMobileDB().model('Theme', UserSchema);
+module.exports = mongoConnection.getBoomMobileDB().model('Theme', FeedSchema);

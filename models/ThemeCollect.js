@@ -7,4 +7,4 @@ const ThemeCollectSchema = new mongoose.Schema({
     collectedDate: Date
 });
 
-module.exports = mongoConnection.getBoomMobileDB().model('ThemeCollect', ProjectCollectSchema);
+module.exports = mongoConnection.getBoomMobileDB().model('ThemeCollect', ThemeCollectSchema);
