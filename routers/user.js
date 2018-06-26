@@ -11,7 +11,7 @@ const defaultPageSize = 24;
 const _ = require('lodash');
 
 /**
- * @api {get} /api/user/info info
+ * @api {get} /api/user/info 用户信息
  * @apiName info
  * @apiGroup User
  * @apiHeader {String} sessionid
@@ -27,11 +27,11 @@ router.get('/api/user/info', function* () {
 });
 
 /**
- * @api {get} /api/projectCollect/list 文章收藏列表
+ * @api {get} /api/projectCollect/list 收藏列表
  * @apiName project collect list
  * @apiGroup User
  * @apiHeader {String} sessionid
- * @apiParam {Number} page 分页参数
+ * @apiParam {Number{1..40}} page =1 分页参数
  * @apiSuccessExample {json} Success-Response:
  * [{}]
  */
@@ -54,11 +54,11 @@ router.get('/api/projectCollect/list', function* () {
 });
 
 /**
- * @api {get} /api/projectNote/list 文章标注列表
+ * @api {get} /api/projectNote/list 标注列表
  * @apiName project note list
  * @apiGroup User
  * @apiHeader {String} sessionid
- * @apiParam {Number} page 分页参数
+ * @apiParam {Number{1..40}} page =1 分页参数
  * @apiSuccessExample {json} Success-Response:
  * [{}]
  */
@@ -77,11 +77,11 @@ router.get('/api/projectNote/list', function* () {
 });
 
 /**
- * @api {get} /api/themeCollect/list 文章标注列表
+ * @api {get} /api/themeCollect/list 关注主题列表
  * @apiName theme collect list
  * @apiGroup User
  * @apiHeader {String} sessionid
- * @apiParam {Number} page 分页参数
+ * @apiParam {Number{1..40}} page =1 分页参数
  * @apiSuccessExample {json} Success-Response:
  * [{}]
  */
@@ -97,8 +97,8 @@ router.get('/api/themeCollect/list', function* () {
     let openId = this.openId;
     let themeCollectIdList = yield ThemeCollect.find({ openId: openId }).sort({ notedDate: -1 }).limit(defaultPageSize).skip(offset);
     themeCollectIdList = _.map(themeCollectIdList, t => t._id);
-    let themeCollect = ThemeCollect.find({ _id: { $in: themeCollectIdList } });
-    this.body = themeCollect || [];
+    let themeList = yield Theme.find({ _id: { $in: themeCollectIdList } });
+    this.body = themeList || [];
 });
 
 module.exports = router;

@@ -17,7 +17,7 @@ function* login(openId) {
 }
 
 /**
- * @api {get} /test login
+ * @api {get} /test test
  * @apiName test
  * @apiGroup Login
  * @apiSuccessExample {json} Success-Response:

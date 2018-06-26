@@ -2,6 +2,8 @@
 const router = require('koa-router')();
 const Project = require('../models/Project');
 const ProjectText = require('../models/ProjectText');
+const ProjectCollect = require('../models/ProjectCollect');
+const Theme = require('../models/Theme');
 const fileUrlUtil = require('../common/FileUrlUtil');
 const ESClientFactory = require('../common/ESClientFactory');
 const parse = require('co-body');
@@ -18,7 +20,10 @@ const REDIS_SESSION_PREFIX = Utils.REDIS_SESSION_PREFIX;
  * @api {get} /api/project/list 获取资讯列表
  * @apiName list
  * @apiGroup Project
- *
+ * @apiHeader {String} sessionid
+ * @apiParam {Number{1..40}} page =1 分页参数
+ * @apiParam {String} themeId 主题ID，如果不传，返回精选资讯;如果themeId='subscribe',返回我订阅的主题文章
+ * @apiParam {String} kw 非必须，查询参数
  * @apiSuccessExample {json} Success-Response:
  * [{}]
  */
@@ -37,48 +42,37 @@ router.get('/api/project/list', function* () {
     let query = { filtered: filtered };
     let sort = [];
 
-    if (this.query.feed) {
-        let feedId = this.query.feed;
+    let openId = this.openId;
+    let themeId = this.query.themeId;
+    if (themeId) {
         let feedIdList;
-        if (feedId == 'subscribe') {
-            feedIdList = _.map(
-                yield Subscribe.find({ account: this.session.account._id }, { feed: 1 }),
-                f => f.feed
-            );
-        } else if (feedId.startsWith('t_')) {
-            let topicId = feedId.substring(2);
-            feedIdList = _.map(
-                yield Subscribe.find({ account: this.session.account._id, topic: topicId }, { feed: 1 }),
-                f => f.feed
-            );
+        if (themeId == 'subscribe') {
+            let themeCollectIdList = yield ThemeCollect.find({ openId: openId }).sort({ notedDate: -1 });
+            themeCollectIdList = _.map(themeCollectIdList, t => t._id);
+            let themeList = yield Theme.find({ _id: { $in: themeCollectIdList } });
+            for (let theme of themeList) {
+                feedIdList = _.concat(feedIdList, theme.feeds);
+            }
         } else {
-            feedIdList = [feedId];
+            let theme = yield Theme.findOne({ _id: themeId });
+            feedIdList = theme.feeds;
         }
         mustFilter.push({ terms: { feed: feedIdList } });
     }
 
-    if (this.query.tag) {
-        mustFilter.push({ term: { tags: this.query.tag } });
-    }
-
     let kw = this.query.keyword;
     if (kw) {
-        if (kw.startsWith('tag:')) {
-            kw = kw.substring(4);
-            mustFilter.push({ term: { tags: _.lowerCase(kw) } });
-        } else {
-            filtered.query = {
-                bool: {
-                    should: [
-                        { match: { title: kw } },
-                        { term: { tags: kw } },
-                        { match: { desc: kw } },
-                        { match: { text: kw } }
-                    ]
-                }
-            };
-            sort.push({ "_score": { "order": "desc" } });
-        }
+        filtered.query = {
+            bool: {
+                should: [
+                    { match: { title: kw } },
+                    { term: { tags: kw } },
+                    { match: { desc: kw } },
+                    { match: { text: kw } }
+                ]
+            }
+        };
+        sort.push({ "_score": { "order": "desc" } });
     }
 
     sort.push({ "datePublished": { "order": "desc" } });
@@ -96,14 +90,7 @@ router.get('/api/project/list', function* () {
 
     let projectList = yield Project.find({ _id: { $in: projectIdList } });
 
-    /*
-     这一行代码还是必要的 mongo会缓存查询结果。虽然一般情况下，会按照projectIdList的顺序返回list，但是在没有明确指定排序时候并不是一定的。
-     */
     projectList = _.sortBy(projectList, p => projectIdList.indexOf(p.id));
-
-    // 查询每个project的feed和channel
-    // projectList = yield queryProjectListFeedAndChannel(projectList);
-
     this.body = projectList || [];
 });
 
@@ -114,124 +101,31 @@ router.get('/api/project/list', function* () {
  * @apiGroup Project
  *
  * @apiParamExample {JSON} Request-Example:
- * {id:'文章id',openId:'用户opendId'}
- *
+ * {id:'文章id'}
+ * @apiHeader {String} sessionid
   * @apiSuccessExample {json} Success-Response:
  * {operator:'add'} / {operator:'cancel'}
  * @apiErrorExample {json} Error-Response:
  * {errmsg:'not fount'}
  */
-router.post('/api/project/toggleCollect', function *() {
+router.post('/api/project/toggleCollect', function* () {
     let data = yield parse(this);
-    let id = data.id;
-    let openId = data.openId;
+    let openId = this.openId;
 
-    let project = yield Project.findOne({_id: id, isDel: 0});
-    if(!project) {
-        this.body = {errmsg: 'not found'};
+    let project = yield Project.findOne({ _id: id, isDel: 0 });
+    if (!project) {
+        this.body = { errmsg: 'not found' };
         return;
     }
-
     let uid = openId + '#' + project._id;
-    let pc = yield ProjectCollect.findOne({_id: uid});
+    let pc = yield ProjectCollect.findOne({ _id: uid });
     if (pc) {
         yield pc.remove();
-        this.body = {operator: 'cancel'};
+        this.body = { operator: 'cancel' };
     } else {
-        yield new ProjectCollect({_id: uid, openId: openId, pid: project._id, collectedDate: new Date()}).save();
-        this.body = {operator: 'add'};
+        yield new ProjectCollect({ _id: uid, openId: openId, pid: project._id, collectedDate: new Date() }).save();
+        this.body = { operator: 'add' };
     }
-});
-
-/**
- * @api {get} /api/project/collections 收藏列表
- * @apiName toggleCollect
- * @apiGroup Project
- *
- * @apiParamExample {JSON} Request-Example:
- * {openId:'用户opendId'}
- * @apiSuccessExample {json} Success-Response:
- * []
- */
-router.get('/api/project/collections', function* () {
-
-    let page = this.query.page || 1;
-
-    if (page < 1) {
-        page = 1;
-    } else if (page > 20) {
-        page = 20;
-    }
-    let offset = (page - 1) * defaultPageSize;
-
-    let tags = this.query.tags && this.query.tags.split(',');
-    let keyword = this.query.keyword;
-    //TODO 这里后续会移除
-    let openId = yield client.getAsync(REDIS_SESSION_PREFIX + headers.sessionid);
-    let query = { openId: openId };
-    if (tags) {
-        query.tags = { $all: tags };
-    }
-
-    let collected;
-    if (keyword && hasFulltext) {
-        collected = yield ProjectCollect.find(query, { pid: 1 });
-    } else {
-        collected = yield ProjectCollect.find(query, { pid: 1 }).sort({ collectedDate: -1 }).skip(offset).limit(defaultPageSize);
-    }
-    if (!collected || collected.length == 0) {
-        this.body = [];
-        return;
-    }
-    let collectedId = _.map(collected, c => c.pid || c._id.split('#')[1]);
-
-    let projectIdList;
-    if (keyword && hasFulltext) {
-
-        let es = ESClientFactory.get();
-        let sort = [{ "_score": { "order": "desc" } }, { "datePublished": { "order": "desc" } }];
-        let query = {
-            filtered: {
-                filter: {
-                    bool: {
-                        must: [
-                            { term: { isDel: 0 } },
-                            { terms: { _id: collectedId } }
-                        ]
-                    }
-                },
-                query: {
-                    bool: {
-                        should: [
-                            { match: { title: keyword } },
-                            { match: { tags: keyword } },
-                            { match: { desc: keyword } },
-                            { match: { text: keyword } }
-                        ]
-                    }
-                }
-            }
-        };
-
-        let plist = (yield es.search({
-            index: 'boom',
-            type: 'project',
-            from: offset,
-            size: defaultPageSize,
-            body: { query, sort }
-        })).hits.hits;
-
-        projectIdList = _.map(plist, p => p._id);
-    } else {
-        projectIdList = collectedId;
-    }
-
-    let projectList = yield Project.find({ _id: { $in: projectIdList } });
-    projectList = _.sortBy(projectList, p => projectIdList.indexOf(p.id));
-
-    // projectList = yield queryProjectListFeedAndChannel(projectList);
-
-    this.body = projectList;
 });
 
 /**
@@ -243,31 +137,28 @@ router.get('/api/project/collections', function* () {
  * @apiSuccessExample {json} Success-Response:
  * {}
  */
-router.get('/api/project/detail/:id', function *() {
+router.get('/api/project/detail/:id', function* () {
     let id = this.params.id;
+    let openId = this.openId;
     let project;
-    project = yield Project.findOne({_id: id, isDel: 0}, {
+    project = yield Project.findOne({ _id: id, isDel: 0 }, {
         originViews: 0,
         originLikes: 0,
         originForwards: 0,
         originShares: 0
     });
-    if(!project) {
+    if (!project) {
         this.body = {};
         return;
     }
     let json = project.toObject();
 
-    //TODO 这里后续会移除
-    // let openId = yield client.getAsync(REDIS_SESSION_PREFIX + headers.sessionid);
-    // let collection = yield ProjectCollect.findOne({_id: openId +'#' + project._id});
+    let collection = yield ProjectCollect.findOne({_id: openId + '#' + project._id});
+    json.isCollection = collection? true: false;
 
-    // json.collection = {
-    //     isCollected: collection? true: false,
-    //     tags: (collection && collection.tags) || []
-    // };
+    
 
-    let text = yield ProjectText.findOne({_id: project._id});
+    let text = yield ProjectText.findOne({ _id: project._id });
     json.text = text && text.text;
 
     this.body = json;
