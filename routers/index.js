@@ -9,7 +9,7 @@ module.exports = function (server) {
     server.use(login.routes()).use(login.allowedMethods());
     const tool = require('./tool');
     server.use(tool.routes()).use(tool.allowedMethods());
-    
+
     server.use(function* (next) {
         try {
             let headers = this.headers;
@@ -31,8 +31,10 @@ module.exports = function (server) {
         }
     });
 
+    const theme = require('./theme');
+    server.use(theme.routes()).use(theme.allowedMethods());
     const project = require('./project');
-    server.use(project.routes()).use(login.allowedMethods());
+    server.use(project.routes()).use(project.allowedMethods());
 
     const user = require('./user');
     server.use(user.routes()).use(user.allowedMethods());
