@@ -6,8 +6,10 @@ const REDIS_SESSION_PREFIX = Utils.REDIS_SESSION_PREFIX;
 
 module.exports = function (server) {
     const login = require('./login');
-    
     server.use(login.routes()).use(login.allowedMethods());
+    const tool = require('./tool');
+    server.use(tool.routes()).use(tool.allowedMethods());
+    
     server.use(function* (next) {
         try {
             let headers = this.headers;

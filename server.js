@@ -19,12 +19,6 @@ server.use(require('koa-static-server')({
 }));
 
 /* mongo */
-// const mongoose = require('mongoose');
-// mongoose.Promise = global.Promise;
-// let boomMobileUrl = config.get('mongo.boommobile') || 'mongodb://localhost:27017/boommobile';
-// let boomUrl = config.get('mongo.boom') || 'mongodb://localhost:27017/boom';
-// mongoose.boomMobileDB = mongoose.createConnection(boomMobileUrl);
-// mongoose.boomDB = mongoose.createConnection(boomUrl);
 const mangoConnection = require('./common/MongoConnection');
 mangoConnection.init();
 
