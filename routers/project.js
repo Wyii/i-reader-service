@@ -37,7 +37,7 @@ router.get('/api/project/list', function* () {
     }
 
     let es = ESClientFactory.get();
-    let mustFilter = [{ term: { isDel: 0 } }];
+    let mustFilter = [{ term: { isDel: 0 } }, { term: { type: 'wechat' } }];
     let filtered = { filter: { bool: { must: mustFilter } } };
     let query = { filtered: filtered };
     let sort = [];
@@ -153,10 +153,10 @@ router.get('/api/project/detail/:id', function* () {
     }
     let json = project.toObject();
 
-    let collection = yield ProjectCollect.findOne({_id: openId + '#' + project._id});
-    json.isCollection = collection? true: false;
+    let collection = yield ProjectCollect.findOne({ _id: openId + '#' + project._id });
+    json.isCollection = collection ? true : false;
 
-    
+
 
     let text = yield ProjectText.findOne({ _id: project._id });
     json.text = text && text.text;
