@@ -1,3 +1,7 @@
+/**
+ * 该路由包含了一些后台所需的处理接口 
+*/
+
 const co = require('co');
 const Theme = require('../models/Theme');
 const router = require('koa-router')();
