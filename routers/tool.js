@@ -10,15 +10,20 @@ let data = "创意文案、设计艺术、文艺生活、摄影美图、时尚�
 
 
 router.get('/api/tool/initTheme', function* () {
-    let dataList = data.split('、');
-    for (let item of dataList) {
-        let name = item.trim();
-        let theme = Theme.find({ name: name });
-        if (theme) continue;
-        yield new Theme({ name: name, image: '', feeds: [] }).save();
+    let themeJson = require('../config/theme.json');
+    // let dataList = data.split('、');
+    for (let item of themeJson) {
+        let name = item.name
+        let theme = yield Theme.findOne({ name: name });
+        if (theme) {
+            yield Theme.update({ name: name }, { $set: { feeds: item.feeds } });
+        } else {
+            yield new Theme({ name: name, image: item.image, feeds: item.feeds }).save();
+
+        }
     }
     console.log('update theme');
-    this.body = {info:'update theme'};
+    this.body = { info: 'update theme' };
 });
 
 module.exports = router;

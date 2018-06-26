@@ -9,6 +9,7 @@ server.use(function* (next) {
     try {
         yield next;
     } catch (e) {
+        console.log(e)
         this.body = { 'status': 'error', msg: 'system inner error.' };
     }
 });
