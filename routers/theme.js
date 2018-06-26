@@ -7,6 +7,7 @@ const Theme = require('../models/Theme');
 const ThemeCollect = require('../models/ThemeCollect');
 const router = require('koa-router')();
 const defaultPageSize = 10;
+const _ = require('lodash');
 
 /**
  * @api {get} /api/theme/list 主题列表
@@ -27,7 +28,11 @@ router.get('/api/theme/list', function* () {
     }
     let skip = (page - 1) * defaultPageSize;
     let themeList = yield Theme.find({}).limit(defaultPageSize).skip(skip);
-    this.body = themeList || [];
+    let result = [];
+    for (let theme of themeList) {
+        result.push({ name: theme.name, _id: theme._id });
+    }
+    this.body = result;
 });
 
 /**
