@@ -90,10 +90,29 @@ router.get('/api/project/list', function* () {
 
     let projectList = yield Project.find({ _id: { $in: projectIdList } });
 
+    //查询主题名称
+    let themeList = yield Theme.find({});
+    let feedIdMappingThemeName = {};
+    for (let theme of themeList) {
+        let feedInThemeList = theme.feeds;
+        for (let feedId of feedInThemeList) {
+            feedIdMappingThemeName[feedId] = theme.name;
+        }
+    }
+
+    let projectIdList = yield ProjectCollect.find({ openId: openId });
+    projectIdList = _.map(projectIdList, p => p._id);
+
+    for (let project of projectList) {
+        let feed = project.feed;
+        project.theme = feedIdMappingThemeName[feed];
+        project.isCollected = false;
+        if (projectIdList.indexOf(project._id) != -1) project.isCollected = true;
+    }
+
     projectList = _.sortBy(projectList, p => projectIdList.indexOf(p.id));
     this.body = projectList || [];
 });
-
 
 /**
  * @api {post} /api/project/toggleCollect 收藏/取消收藏
