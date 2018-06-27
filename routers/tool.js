@@ -16,7 +16,7 @@ router.get('/api/tool/initTheme', function* () {
         let name = item.name
         let theme = yield Theme.findOne({ name: name });
         if (theme) {
-            yield Theme.update({ name: name }, { $set: { feeds: item.feeds } });
+            yield Theme.update({ name: name }, { $set: { feeds: item.feeds, desc: item.desc } });
         } else {
             yield new Theme({ name: name, image: item.image, feeds: item.feeds }).save();
 

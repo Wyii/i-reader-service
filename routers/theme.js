@@ -9,6 +9,19 @@ const router = require('koa-router')();
 const defaultPageSize = 10;
 const _ = require('lodash');
 
+const themeCountBase = {
+    "游戏": 13731,
+    "设计艺术": 8141,
+    "创意文案": 7131,
+    "摄影美图": 23711,
+    "时尚美妆": 1321,
+    "旅行": 4712,
+    "电影电视剧": 7612,
+    "互联网科技": 5713,
+    "文艺生活": 871,
+    "最热资讯": 3712
+}
+
 /**
  * @api {get} /api/theme/list 主题列表
  * @apiName list
@@ -16,7 +29,12 @@ const _ = require('lodash');
  * @apiHeader {String} sessionid
  * @apiParam {Number{1..40}} page =1 分页参数
  * @apiSuccessExample {json} Success-Response:
- * [{}]
+ * [{
+ *       "name": "游戏",
+ *      "_id": "5b3209fddb3b39460768365a"
+ *      "count" : 1234,
+ *      "isCollect" : true
+ *   }]
  */
 router.get('/api/theme/list', function* () {
     let page = parseInt(this.query.page) || 1;
@@ -27,10 +45,22 @@ router.get('/api/theme/list', function* () {
         return;
     }
     let skip = (page - 1) * defaultPageSize;
+    let openId = this.openId;
     let themeList = yield Theme.find({}).limit(defaultPageSize).skip(skip);
+
+    let themeCountList = yield ThemeCollect.aggregate([{ $group: { _id: "tid", count: { $sum: 1 } } }]);
+    let themeCountMap = {};
+    for (let theme of themeCountList) {
+        themeCountMap[theme._id] = theme.count;
+    }
+
+    let themeCollectIdList = yield ThemeCollect.find({ openId: openId });
+    themeCollectIdList = _.map(themeCollectIdList, t => t._id);
     let result = [];
     for (let theme of themeList) {
-        result.push({ name: theme.name, _id: theme._id });
+        let temp = { _id: theme._id, name: theme.name, desc: theme.desc, isCollect: false, count: themeCountBase[theme.name] + (themeCountMap[theme._id] || 0) };
+        if (themeCollectIdList.indexOf(theme._id) != -1) temp.isCollect = true;
+        result.push(temp);
     }
     this.body = result;
 });
