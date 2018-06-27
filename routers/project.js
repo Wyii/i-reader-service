@@ -105,6 +105,7 @@ router.get('/api/project/list', function* () {
 
     let cleanProjectList = [];
     for (let project of projectList) {
+        project = project.toObject();
         let feed = project.feed;
         project.theme = feedIdMappingThemeName[feed];
         project.isCollected = false;
