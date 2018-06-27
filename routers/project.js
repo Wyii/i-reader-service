@@ -100,14 +100,14 @@ router.get('/api/project/list', function* () {
         }
     }
 
-    let projectIdList = yield ProjectCollect.find({ openId: openId });
-    projectIdList = _.map(projectIdList, p => p._id);
+    let projectCollectIdList = yield ProjectCollect.find({ openId: openId });
+    projectCollectIdList = _.map(projectCollectIdList, p => p._id);
 
     for (let project of projectList) {
         let feed = project.feed;
         project.theme = feedIdMappingThemeName[feed];
         project.isCollected = false;
-        if (projectIdList.indexOf(project._id) != -1) project.isCollected = true;
+        if (projectCollectIdList.indexOf(project._id) != -1) project.isCollected = true;
     }
 
     projectList = _.sortBy(projectList, p => projectIdList.indexOf(p.id));
