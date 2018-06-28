@@ -179,14 +179,15 @@ router.get('/api/project/detail/:id', function* () {
     let collection = yield ProjectCollect.findOne({ _id: openId + '#' + project._id });
     json.isCollected = collection ? true : false;
 
-
-
     let text = yield ProjectText.findOne({ _id: project._id });
     text = text && text.text;
-    const $ = cheerio.load(text);
-    text = $('#js_content').wrap('<p/>').parent().html();
-    // json.text = unescape(text.replace(/&#x/g, '%u').replace(/;/g, '')).replace(/%uA0/g, '');
     json.text = text;
+    if (project.text === "wechat") {
+        const $ = cheerio.load(text);
+        text = $('#js_content').wrap('<p/>').parent().html();
+        // json.text = unescape(text.replace(/&#x/g, '%u').replace(/;/g, '')).replace(/%uA0/g, '');
+        json.text = text;
+    }
     this.body = json;
 });
 
