@@ -182,7 +182,7 @@ router.get('/api/project/detail/:id', function* () {
     let text = yield ProjectText.findOne({ _id: project._id });
     text = text && text.text;
     json.text = text;
-    if (project.text === "wechat") {
+    if (project.type === "wechat") {
         const $ = cheerio.load(text);
         text = $('#js_content').wrap('<p/>').parent().html();
         // json.text = unescape(text.replace(/&#x/g, '%u').replace(/;/g, '')).replace(/%uA0/g, '');
