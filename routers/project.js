@@ -4,6 +4,7 @@ const Project = require('../models/Project');
 const ProjectText = require('../models/ProjectText');
 const ProjectCollect = require('../models/ProjectCollect');
 const Theme = require('../models/Theme');
+const DailyNews = require('../models/DailyNews');
 const fileUrlUtil = require('../common/FileUrlUtil');
 const ESClientFactory = require('../common/ESClientFactory');
 const parse = require('co-body');
@@ -45,10 +46,12 @@ router.get('/api/project/list', function* () {
 
     let openId = this.openId;
     let themeId = this.query.themeId;
+    let feedIdList;
+    let dailyNewsProject;
+    let dailyMappingProject = {};
     if (themeId) {
-        let feedIdList;
         if (themeId == 'subscribe') {
-            let themeCollectIdList = yield ThemeCollect.find({ openId: openId }).sort({ notedDate: -1 });
+            let themeCollectIdList = yield ThemeCollect.find({ openId: openId });
             themeCollectIdList = _.map(themeCollectIdList, t => t._id);
             let themeList = yield Theme.find({ _id: { $in: themeCollectIdList } });
             for (let theme of themeList) {
@@ -58,8 +61,11 @@ router.get('/api/project/list', function* () {
             let theme = yield Theme.findOne({ _id: themeId });
             feedIdList = theme.feeds;
         }
-        mustFilter.push({ terms: { feed: feedIdList } });
+    } else {
+        let dailyNewsIdList = yield DailyNews.find({ type: 'feed', status: 1 });
+        feedIdList = _.map(dailyNewsIdList, t => t.id);
     }
+    mustFilter.push({ terms: { feed: feedIdList } });
 
     let kw = this.query.keyword;
     if (kw) {
@@ -89,7 +95,6 @@ router.get('/api/project/list', function* () {
     })).hits.hits;
     projectIdList = _.map(projectIdList, p => p._id);
 
-    let projectList = yield Project.find({ _id: { $in: projectIdList } });
 
     //查询主题名称
     let themeList = yield Theme.find({});
@@ -104,6 +109,8 @@ router.get('/api/project/list', function* () {
     let projectCollectIdList = yield ProjectCollect.find({ openId: openId });
     projectCollectIdList = _.map(projectCollectIdList, p => p._id);
 
+    let projectList = yield Project.find({ _id: { $in: projectIdList } });
+    
     let cleanProjectList = [];
     for (let project of projectList) {
         project = project.toObject();

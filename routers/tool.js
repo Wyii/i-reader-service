@@ -4,14 +4,13 @@
 
 const co = require('co');
 const Theme = require('../models/Theme');
+const DailyNews = require('../models/DailyNews');
 const router = require('koa-router')();
-
-let data = "创意文案、设计艺术、文艺生活、摄影美图、时尚美妆、最热资讯、互联网科技、电影电视剧、旅行、游戏";
+const moment = require('moment');
 
 
 router.get('/api/tool/initTheme', function* () {
     let themeJson = require('../config/theme.json');
-    // let dataList = data.split('、');
     for (let item of themeJson) {
         let name = item.name
         let theme = yield Theme.findOne({ name: name });
@@ -25,5 +24,27 @@ router.get('/api/tool/initTheme', function* () {
     console.log('update theme');
     this.body = { info: 'update theme' };
 });
+
+router.get('/api/tool/initDailyNews', function* () {
+    let dailyNewsJson = require('../config/dailyNews.json');
+    for (let item of dailyNewsJson) {
+        let type = item.type;
+        let status = item.status;
+        let publishDate;
+        if (item.publishDate)
+            publishDate = moment(item.publishDate, 'YYYY.M.DD').toDate();
+        for (let id of item.ids) {
+            let news = yield DailyNews.findOne({ type: type, id: id });
+            if (news) {
+                yield DailyNews.update({ type: type, id: id }, { $set: { status: status, publishDate: publishDate } });
+            } else {
+                yield new DailyNews({ type: type, status: status, id: id, publishDate: publishDate }).save();
+            }
+
+        }
+    }
+    console.log('update dailyNews');
+    this.body = { info: 'update dailyNews' };
+})
 
 module.exports = router;

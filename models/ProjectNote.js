@@ -7,7 +7,8 @@ const ProjectNoteSchema = new mongoose.Schema({
     notedDate: Date,
     start: Number,
     end: Number,
-    text: String
+    text: String,
+    note: String
 });
 
 module.exports = mongoConnection.getBoomMobileDB().model('ProjectNote', ProjectNoteSchema);
