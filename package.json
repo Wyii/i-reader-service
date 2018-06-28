@@ -11,8 +11,11 @@
   "license": "ISC",
   "dependencies": {
     "bluebird": "^3.4.7",
+    "cheerio": "^1.0.0-rc.2",
     "co-body": "^4.2.0",
     "config": "^1.24.0",
+    "elasticsearch": "^11.0.1",
+    "iconv-lite": "^0.4.23",
     "koa": "^1.2.0",
     "koa-generic-session": "^1.11.5",
     "koa-router": "^5.4.0",
@@ -23,8 +26,7 @@
     "node-uuid": "^1.4.7",
     "redis": "^2.6.5",
     "request": "^2.87.0",
-    "request-promise": "^4.2.1",
-    "elasticsearch": "^11.0.1"
+    "request-promise": "^4.2.1"
   },
   "devDependencies": {
     "apidoc": "^0.17.6"

@@ -10,6 +10,7 @@ const parse = require('co-body');
 
 const moment = require('moment');
 const _ = require('lodash');
+const cheerio = require('cheerio');
 
 const defaultPageSize = 24;
 const Utils = require('../utils/Utils');
@@ -176,13 +177,17 @@ router.get('/api/project/detail/:id', function* () {
     let json = project.toObject();
 
     let collection = yield ProjectCollect.findOne({ _id: openId + '#' + project._id });
-    json.isCollection = collection ? true : false;
+    json.isCollected = collection ? true : false;
 
 
 
     let text = yield ProjectText.findOne({ _id: project._id });
-    json.text = text && text.text;
+    text = text && text.text;
+    const $ = cheerio.load(text);
+    text = $('#js_content').wrap('<p/>').parent().html();
+    json.text = unescape(text.replace(/&#x/g, '%u').replace(/;/g, '')).replace(/%uA0/g, '');
 
+    console.log(json.text);
     this.body = json;
 });
 
