@@ -185,9 +185,8 @@ router.get('/api/project/detail/:id', function* () {
     text = text && text.text;
     const $ = cheerio.load(text);
     text = $('#js_content').wrap('<p/>').parent().html();
-    json.text = unescape(text.replace(/&#x/g, '%u').replace(/;/g, '')).replace(/%uA0/g, '');
-
-    console.log(json.text);
+    // json.text = unescape(text.replace(/&#x/g, '%u').replace(/;/g, '')).replace(/%uA0/g, '');
+    json.text = text;
     this.body = json;
 });
 
