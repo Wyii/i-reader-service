@@ -155,7 +155,7 @@ router.post('/api/project/toggleCollect', function* () {
  * @api {get} /api/project/detail/:id 文章详情
  * @apiName project detail
  * @apiGroup Project
- *
+* @apiHeader {String} sessionid
  * @apiParam {String} id 文章id.
  * @apiSuccessExample {json} Success-Response:
  * {}
