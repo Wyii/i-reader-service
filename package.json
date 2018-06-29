@@ -16,6 +16,7 @@
     "config": "^1.24.0",
     "elasticsearch": "^11.0.1",
     "iconv-lite": "^0.4.23",
+    "jsdom": "^11.11.0",
     "koa": "^1.2.0",
     "koa-generic-session": "^1.11.5",
     "koa-router": "^5.4.0",

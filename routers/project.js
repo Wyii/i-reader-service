@@ -12,6 +12,8 @@ const parse = require('co-body');
 const moment = require('moment');
 const _ = require('lodash');
 const cheerio = require('cheerio');
+const jsdom = require("jsdom");
+const { JSDOM } = jsdom;
 
 const defaultPageSize = 24;
 const Utils = require('../utils/Utils');
@@ -190,42 +192,15 @@ router.get('/api/project/detail/:id', function* () {
     text = text && text.text;
     json.text = text;
     if (project.type === "wechat") {
-        const $ = cheerio.load(text);
-        text = $('#js_content').wrap('<p/>').parent().html();
+        const dom = new JSDOM(text);
+        // const $ = cheerio.load(text);
+        // text = $('#js_content').wrap('<p/>').parent().html();
         // json.text = unescape(text.replace(/&#x/g, '%u').replace(/;/g, '')).replace(/%uA0/g, '');
-        json.text = text;
+        json.text = dom.window.document.querySelector("#js_content").outerHTML;
     }
     json.likeProjects = yield likeProjects(project);
     this.body = json;
 });
-
-
-// router.get('/api/project/next/:id', function* () {
-//     let themeName = this.query.theme;
-//     let projectId = this.query.id;
-//     let theme = yield Theme.findOne({ name: themeName });
-//     let feedIdList = theme.feeds;
-
-//     let es = ESClientFactory.get();
-//     let filtered = { filter: { bool: { must: mustFilter } } };
-//     let query = { filtered: filtered };
-//     let sort = [{ "datePublished": { "order": "desc" } }];
-
-//     let projectIdList = (yield es.search({
-//         index: 'boom',
-//         type: 'project',
-//         from: offset,
-//         size: 2,
-//         body: { query, sort },
-//         _source: false,
-//     })).hits.hits;
-//     projectIdList = _.map(projectIdList, p => p._id);
-
-//     let projectList = yield Project.find({ _id: { $in: projectIdList } });
-
-//     projectList = _.sortBy(projectList, p => projectIdList.indexOf(p.id));
-//     this.body = projectList || [];
-// });
 
 function* likeProjects(project) {
     let mustFilter = [{ term: { isDel: 0 } }, { term: { type: 'wechat' } }, { term: { feed: project.feed } }];
