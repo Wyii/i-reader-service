@@ -25,7 +25,7 @@ const REDIS_SESSION_PREFIX = Utils.REDIS_SESSION_PREFIX;
  * @apiHeader {String} sessionid
  * @apiParam {Number{1..40}} page =1 分页参数
  * @apiParam {String} themeId 主题ID，如果不传，返回精选资讯;如果themeId='subscribe',返回我订阅的主题文章
- * @apiParam {String} kw 非必须，查询参数
+ * @apiParam {String} keyword 非必须，查询参数
  * @apiSuccessExample {json} Success-Response:
  * [{}]
  */
@@ -110,7 +110,7 @@ router.get('/api/project/list', function* () {
     projectCollectIdList = _.map(projectCollectIdList, p => p._id);
 
     let projectList = yield Project.find({ _id: { $in: projectIdList } });
-    
+
     let cleanProjectList = [];
     for (let project of projectList) {
         project = project.toObject();
@@ -195,7 +195,64 @@ router.get('/api/project/detail/:id', function* () {
         // json.text = unescape(text.replace(/&#x/g, '%u').replace(/;/g, '')).replace(/%uA0/g, '');
         json.text = text;
     }
+    json.likeProjects = yield likeProjects(project);
     this.body = json;
 });
+
+
+// router.get('/api/project/next/:id', function* () {
+//     let themeName = this.query.theme;
+//     let projectId = this.query.id;
+//     let theme = yield Theme.findOne({ name: themeName });
+//     let feedIdList = theme.feeds;
+
+//     let es = ESClientFactory.get();
+//     let filtered = { filter: { bool: { must: mustFilter } } };
+//     let query = { filtered: filtered };
+//     let sort = [{ "datePublished": { "order": "desc" } }];
+
+//     let projectIdList = (yield es.search({
+//         index: 'boom',
+//         type: 'project',
+//         from: offset,
+//         size: 2,
+//         body: { query, sort },
+//         _source: false,
+//     })).hits.hits;
+//     projectIdList = _.map(projectIdList, p => p._id);
+
+//     let projectList = yield Project.find({ _id: { $in: projectIdList } });
+
+//     projectList = _.sortBy(projectList, p => projectIdList.indexOf(p.id));
+//     this.body = projectList || [];
+// });
+
+function* likeProjects(project) {
+    let mustFilter = [{ term: { isDel: 0 } }, { term: { type: 'wechat' } }, { term: { feed: project.feed } }];
+    let filtered = {
+        filter: {
+            bool: {
+                must: mustFilter,
+                must_not: [{ term: { _id: project.id } }]
+            }
+        }
+    };
+    let query = { filtered };
+
+    let es = ESClientFactory.get();
+    let projectIdList = (yield es.search({
+        index: 'boom',
+        type: 'project',
+        from: 0,
+        size: 2,
+        body: { query },
+        _source: false
+    })).hits.hits;
+    projectIdList = _.map(projectIdList, p => p._id);
+
+    let projectList = yield Project.find({ _id: { $in: projectIdList } });
+
+    return projectList;
+}
 
 module.exports = router;
