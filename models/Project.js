@@ -64,6 +64,4 @@ ProjectSchema.methods.coverUrl = function () {
 ProjectSchema.methods.downloadUrl = function () {
     return fileUrlUtil.downloadUrl(this);
 };
-console.log(mongoConnection.getBoomDB())
-// module.exports = mongoose.boomDB.model('Project', ProjectSchema);
 module.exports = mongoConnection.getBoomDB().model('Project', ProjectSchema);
