@@ -49,8 +49,6 @@ router.get('/api/project/list', function* () {
     let openId = this.openId;
     let themeId = this.query.themeId;
     let feedIdList;
-    let dailyNewsProject;
-    let dailyMappingProject = {};
     if (themeId) {
         if (themeId == 'subscribe') {
             let themeCollectIdList = yield ThemeCollect.find({ openId: openId });
@@ -191,7 +189,10 @@ router.get('/api/project/detail/:id', function* () {
     let text = yield ProjectText.findOne({ _id: project._id });
     text = text && text.text;
     json.text = text;
-    if (project.type === "wechat") {
+    let noText = (!text && text == "null" && text == undefined);
+    if (noText) {
+        json.text = "";
+    } else if (project.type === "wechat") {
         const dom = new JSDOM(text);
         // const $ = cheerio.load(text);
         // text = $('#js_content').wrap('<p/>').parent().html();
