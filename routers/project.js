@@ -52,6 +52,7 @@ router.get('/api/project/list', function* () {
     let feedIdList = [];
     if (themeId) {
         if (themeId == 'subscribe') {
+            console.log(openId)
             let themeCollectIdList = yield ThemeCollect.find({ openId: openId });
             console.log(themeCollectIdList)
             themeCollectIdList = _.map(themeCollectIdList, t => t._id);
@@ -143,6 +144,7 @@ router.get('/api/project/list', function* () {
 router.post('/api/project/toggleCollect', function* () {
     let data = yield parse(this);
     let openId = this.openId;
+    let id = data.id;
 
     let project = yield Project.findOne({ _id: id, isDel: 0 });
     if (!project) {
