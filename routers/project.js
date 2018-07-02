@@ -3,6 +3,7 @@ const router = require('koa-router')();
 const Project = require('../models/Project');
 const ProjectText = require('../models/ProjectText');
 const ProjectCollect = require('../models/ProjectCollect');
+const ThemeCollect = require('../models/ThemeCollect');
 const Theme = require('../models/Theme');
 const DailyNews = require('../models/DailyNews');
 const fileUrlUtil = require('../common/FileUrlUtil');
@@ -48,10 +49,11 @@ router.get('/api/project/list', function* () {
 
     let openId = this.openId;
     let themeId = this.query.themeId;
-    let feedIdList;
+    let feedIdList = [];
     if (themeId) {
         if (themeId == 'subscribe') {
             let themeCollectIdList = yield ThemeCollect.find({ openId: openId });
+            console.log(themeCollectIdList)
             themeCollectIdList = _.map(themeCollectIdList, t => t._id);
             let themeList = yield Theme.find({ _id: { $in: themeCollectIdList } });
             for (let theme of themeList) {
