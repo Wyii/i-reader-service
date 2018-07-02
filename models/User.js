@@ -15,4 +15,4 @@ const UserSchema = new mongoose.Schema({
     lastLoginDate: Date
 });
 // module.exports = mongoose.boomMobileDB.model('User', UserSchema);
-module.exports = mongoConnection.getBoomMobileDB().model('User', UserSchema);
+module.exports = mongoConnection.getBoomMobileDB().model('MobileUser', UserSchema);
