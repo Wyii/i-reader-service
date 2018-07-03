@@ -6,8 +6,8 @@ const rp = require('request-promise');
 const Project = require('../models/Project');
 const ThemeCollect = require('../models/ThemeCollect');
 const Theme = require('../models/Theme');
-const ProjectNote = require('../models/ProjectNote');
-const ProjectCollect = require('../models/ProjectCollect');
+const ProjectNote = require('../models/MobileProjectNote');
+const ProjectCollect = require('../models/MobileProjectCollect');
 const defaultPageSize = 24;
 const _ = require('lodash');
 

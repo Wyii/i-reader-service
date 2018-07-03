@@ -8,4 +8,4 @@ const ProjectCollectSchema = new mongoose.Schema({
     tags: Array
 });
 
-module.exports = mongoConnection.getBoomMobileDB().model('ProjectCollect', ProjectCollectSchema);
+module.exports = mongoConnection.getBoomMobileDB().model('MobileProjectCollect', ProjectCollectSchema);

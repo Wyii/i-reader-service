@@ -11,4 +11,4 @@ const ProjectNoteSchema = new mongoose.Schema({
     note: String
 });
 
-module.exports = mongoConnection.getBoomMobileDB().model('ProjectNote', ProjectNoteSchema);
+module.exports = mongoConnection.getBoomMobileDB().model('MobileProjectNote', ProjectNoteSchema);
