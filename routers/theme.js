@@ -60,7 +60,7 @@ router.get('/api/theme/list', function* () {
     let result = [];
     for (let theme of themeList) {
         let temp = { _id: theme._id, name: theme.name, desc: theme.desc, isCollect: false, count: themeCountBase[theme.name] + (themeCountMap[theme._id] || 0) };
-        if (themeCollectIdList.indexOf(theme._id) != -1) temp.isCollect = true;
+        if (themeCollectIdList.indexOf(theme._id.toString()) != -1) temp.isCollect = true;
         result.push(temp);
     }
     this.body = result;
