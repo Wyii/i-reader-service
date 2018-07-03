@@ -5,6 +5,7 @@ const moment = require('moment');
 const rp = require('request-promise');
 const Project = require('../models/Project');
 const ThemeCollect = require('../models/ThemeCollect');
+const Theme = require('../models/Theme');
 const ProjectNote = require('../models/ProjectNote');
 const ProjectCollect = require('../models/ProjectCollect');
 const defaultPageSize = 24;
@@ -46,7 +47,8 @@ router.get('/api/projectCollect/list', function* () {
     let offset = (page - 1) * defaultPageSize;
     let openId = this.openId;
     let projectIdList = yield ProjectCollect.find({ openId: openId }).sort({ collectedDate: -1 }).limit(defaultPageSize).skip(offset);
-    projectIdList = _.map(projectIdList, p => p._id);
+    projectIdList = _.map(projectIdList, p => p.pid);
+    console.log(projectIdList)
 
     let projectList = yield Project.find({ _id: { $in: projectIdList } });
     projectList = _.sortBy(projectList, p => projectIdList.indexOf(p.id));
@@ -96,7 +98,7 @@ router.get('/api/themeCollect/list', function* () {
     let offset = (page - 1) * defaultPageSize;
     let openId = this.openId;
     let themeCollectIdList = yield ThemeCollect.find({ openId: openId }).sort({ notedDate: -1 }).limit(defaultPageSize).skip(offset);
-    themeCollectIdList = _.map(themeCollectIdList, t => t._id);
+    themeCollectIdList = _.map(themeCollectIdList, t => t.tid);
     let themeList = yield Theme.find({ _id: { $in: themeCollectIdList } });
     this.body = themeList || [];
 });
