@@ -118,7 +118,7 @@ router.get('/api/project/list', function* () {
         let feed = project.feed;
         project.theme = feedIdMappingThemeName[feed];
         project.isCollected = false;
-        if (projectCollectIdList.indexOf(project._id) != -1) project.isCollected = true;
+        if (projectCollectIdList.indexOf(project._id.toString()) != -1) project.isCollected = true;
         cleanProjectList.push(project);
     }
 
