@@ -54,9 +54,8 @@ router.get('/api/theme/list', function* () {
     for (let theme of themeCountList) {
         themeCountMap[theme._id] = theme.count;
     }
-
     let themeCollectIdList = yield ThemeCollect.find({ openId: openId });
-    themeCollectIdList = _.map(themeCollectIdList, t => t._id);
+    themeCollectIdList = _.map(themeCollectIdList, t => t.tid);
     let result = [];
     for (let theme of themeList) {
         let temp = { _id: theme._id, name: theme.name, desc: theme.desc, isCollect: false, count: themeCountBase[theme.name] + (themeCountMap[theme._id] || 0) };
