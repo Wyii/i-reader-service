@@ -8,6 +8,7 @@ const ThemeCollect = require('../models/ThemeCollect');
 const router = require('koa-router')();
 const defaultPageSize = 10;
 const _ = require('lodash');
+const parse = require('co-body');
 
 const themeCountBase = {
     "游戏": 13731,
