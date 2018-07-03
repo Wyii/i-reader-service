@@ -48,7 +48,6 @@ router.get('/api/projectCollect/list', function* () {
     let openId = this.openId;
     let projectIdList = yield ProjectCollect.find({ openId: openId }).sort({ collectedDate: -1 }).limit(defaultPageSize).skip(offset);
     projectIdList = _.map(projectIdList, p => p.pid);
-    console.log(projectIdList)
 
     let projectList = yield Project.find({ _id: { $in: projectIdList } });
     projectList = _.sortBy(projectList, p => projectIdList.indexOf(p.id));
@@ -100,6 +99,10 @@ router.get('/api/themeCollect/list', function* () {
     let themeCollectIdList = yield ThemeCollect.find({ openId: openId }).sort({ notedDate: -1 }).limit(defaultPageSize).skip(offset);
     themeCollectIdList = _.map(themeCollectIdList, t => t.tid);
     let themeList = yield Theme.find({ _id: { $in: themeCollectIdList } });
+    for (let theme of themeList) {
+        theme = theme.toObject();
+        theme.isCollect = true;
+    }
     this.body = themeList || [];
 });
 
