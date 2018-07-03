@@ -52,10 +52,8 @@ router.get('/api/project/list', function* () {
     let feedIdList = [];
     if (themeId) {
         if (themeId == 'subscribe') {
-            console.log(openId)
             let themeCollectIdList = yield ThemeCollect.find({ openId: openId });
-            console.log(themeCollectIdList)
-            themeCollectIdList = _.map(themeCollectIdList, t => t._id);
+            themeCollectIdList = _.map(themeCollectIdList, t => t.tid);
             let themeList = yield Theme.find({ _id: { $in: themeCollectIdList } });
             for (let theme of themeList) {
                 feedIdList = _.concat(feedIdList, theme.feeds);
@@ -110,7 +108,7 @@ router.get('/api/project/list', function* () {
     }
 
     let projectCollectIdList = yield ProjectCollect.find({ openId: openId });
-    projectCollectIdList = _.map(projectCollectIdList, p => p._id);
+    projectCollectIdList = _.map(projectCollectIdList, p => p.pid);
 
     let projectList = yield Project.find({ _id: { $in: projectIdList } });
 
