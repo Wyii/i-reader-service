@@ -81,6 +81,7 @@ router.get('/api/theme/list', function* () {
 router.post('/api/theme/toggleCollect', function* () {
     let data = yield parse(this);
     let openId = this.openId;
+    let id = data.id;
 
     let theme = yield Theme.findOne({ _id: id });
     if (!theme) {
