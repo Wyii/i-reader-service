@@ -11,6 +11,19 @@ const ProjectCollect = require('../models/MobileProjectCollect');
 const defaultPageSize = 24;
 const _ = require('lodash');
 
+const themeCountBase = {
+    "游戏": 13731,
+    "设计艺术": 8141,
+    "创意文案": 7131,
+    "摄影美图": 23711,
+    "时尚美妆": 1321,
+    "旅行": 4712,
+    "电影电视剧": 7612,
+    "互联网科技": 5713,
+    "文艺生活": 871,
+    "最热资讯": 3712
+}
+
 /**
  * @api {get} /api/user/info 用户信息
  * @apiName info
@@ -96,14 +109,22 @@ router.get('/api/themeCollect/list', function* () {
     }
     let offset = (page - 1) * defaultPageSize;
     let openId = this.openId;
+
+    let themeCountList = yield ThemeCollect.aggregate([{ $group: { _id: "tid", count: { $sum: 1 } } }]);
+    let themeCountMap = {};
+    for (let theme of themeCountList) {
+        themeCountMap[theme._id] = theme.count;
+    }
+
     let themeCollectIdList = yield ThemeCollect.find({ openId: openId }).sort({ notedDate: -1 }).limit(defaultPageSize).skip(offset);
     themeCollectIdList = _.map(themeCollectIdList, t => t.tid);
     let themeList = yield Theme.find({ _id: { $in: themeCollectIdList } });
+    let result = [];
     for (let theme of themeList) {
-        theme = theme.toObject();
-        theme.isCollect = true;
+        let temp = { _id: theme._id, name: theme.name, desc: theme.desc, isCollect: true, count: themeCountBase[theme.name] + (themeCountMap[theme._id] || 0) };
+        result.push(temp);
     }
-    this.body = themeList || [];
+    this.body = result;
 });
 
 module.exports = router;
