@@ -3,10 +3,10 @@ const router = require('koa-router')();
 const Project = require('../models/Project');
 const ProjectText = require('../models/ProjectText');
 const ProjectCollect = require('../models/MobileProjectCollect');
+const ProjectNote = require('../models/MobileProjectNote');
 const ThemeCollect = require('../models/ThemeCollect');
 const Theme = require('../models/Theme');
 const DailyNews = require('../models/DailyNews');
-const fileUrlUtil = require('../common/FileUrlUtil');
 const ESClientFactory = require('../common/ESClientFactory');
 const parse = require('co-body');
 
@@ -204,6 +204,39 @@ router.get('/api/project/detail/:id', function* () {
     json.likeProjects = yield likeProjects(project);
     this.body = json;
 });
+
+/**
+ * @api {post} /api/project/note 笔记
+ * @apiName toggleCollect
+ * @apiGroup Project
+ *
+ * @apiParamExample {JSON} Request-Example:
+ * {id:'文章id','domIndex':'页面元素下标',text:'标注的文本',note:'用户自定义的文字'}
+ * @apiHeader {String} sessionid
+  * @apiSuccessExample {json} Success-Response:
+ * {operator:'add'} / {operator:'cancel'}
+ * @apiErrorExample {json} Error-Response:
+ * {errmsg:'not fount'}
+ */
+router.post('/api/project/note', function* () {
+    let data = yield parse(this);
+    let openId = this.openId;
+    let id = data.id;
+    let domIndex = data.domIndex;
+    let text = data.text;
+    let note = data.index;
+    let uid = openId + '#' + id + '#' + domIndex;
+    let projectNote = yield ProjectNote.find({ _id: uid });
+    if (projectNote) {
+        yield projectNote.remove();
+        this.body = { operator: 'cancel' };
+    } else {
+        yield new ProjectNote({ _id: uid, openId: openId, pid: id, notedDate: new Date(), text: text, note: note, domIndex: domIndex }).save();
+        this.body = { status: true, operator: 'add' };
+    }
+
+});
+
 
 function* likeProjects(project) {
     let mustFilter = [{ term: { isDel: 0 } }, { term: { type: 'wechat' } }, { term: { feed: project.feed } }];
