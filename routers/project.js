@@ -225,11 +225,11 @@ router.post('/api/project/note', function* () {
     let id = data.id;
     let domIndex = data.domIndex;
     let text = data.text;
-    let note = data.index;
+    let note = data.note;
     let uid = openId + '#' + id + '#' + domIndex;
-    let projectNote = yield ProjectNote.find({ _id: uid });
+    let projectNote = yield ProjectNote.findOne({ _id: uid });
     if (projectNote) {
-        yield projectNote.remove();
+        yield ProjectNote.remove();
         this.body = { operator: 'cancel' };
     } else {
         yield new ProjectNote({ _id: uid, openId: openId, pid: id, notedDate: new Date(), text: text, note: note, domIndex: domIndex }).save();
