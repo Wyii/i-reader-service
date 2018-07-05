@@ -202,6 +202,7 @@ router.get('/api/project/detail/:id', function* () {
         json.text = dom.window.document.querySelector("#js_content").outerHTML;
     }
     json.likeProjects = yield likeProjects(project);
+    json.notes = yield getNotes(openId, project._id);
     this.body = json;
 });
 
@@ -236,6 +237,12 @@ router.post('/api/project/note', function* () {
     }
 
 });
+
+function* getNotes(openId, pid) {
+    let projectNoteIndexList = yield ProjectNote.find({ openId, pid });
+    projectNoteIndexList = _.map(projectNoteIndexList, n => n.domIndex);
+    return projectNoteIndexList;
+}
 
 
 function* likeProjects(project) {
