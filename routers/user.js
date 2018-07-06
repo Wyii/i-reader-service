@@ -105,7 +105,20 @@ router.get('/api/projectNote/list', function* () {
     let offset = (page - 1) * defaultPageSize;
     let openId = this.openId;
     let projectNote = yield ProjectNote.find({ openId: openId }).sort({ notedDate: -1 }).limit(defaultPageSize).skip(offset);
-    this.body = projectNote || [];
+    
+    let projectIdList = _.map(projectNote,p=>p.pid);
+    let projectList = yield Project.find({ _id: { $in: projectIdList } });
+    let projectIdMapping = _.keyBy(projectList,'_id');
+
+    let result = [];
+    for(let note of projectNote) {
+        console.log(note)
+        note = note.toObject();
+        note.projectTitle = projectIdMapping[note.pid].title;
+        result.push(note);
+    }
+
+    this.body = result;
 });
 
 /**
