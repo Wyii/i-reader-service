@@ -75,7 +75,7 @@ router.get('/api/projectCollect/list', function* () {
         let feed = project.feed;
         project.theme = feedIdMappingThemeName[feed];
         project.isCollected = true;
-        cleanProjectMap[project_id] = project;
+        cleanProjectMap[project._id] = project;
     }
     let cleanProjectList = [];
     for(let id of projectIdList) {
