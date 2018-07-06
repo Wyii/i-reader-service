@@ -1,8 +1,5 @@
 'use strict';
 const router = require('koa-router')();
-const config = require('config');
-const moment = require('moment');
-const rp = require('request-promise');
 const Project = require('../models/Project');
 const ThemeCollect = require('../models/ThemeCollect');
 const Theme = require('../models/Theme');
@@ -62,9 +59,30 @@ router.get('/api/projectCollect/list', function* () {
     let projectIdList = yield ProjectCollect.find({ openId: openId }).sort({ collectedDate: -1 }).limit(defaultPageSize).skip(offset);
     projectIdList = _.map(projectIdList, p => p.pid);
 
+    let themeList = yield Theme.find({});
+    let feedIdMappingThemeName = {};
+    for (let theme of themeList) {
+        let feedInThemeList = theme.feeds;
+        for (let feedId of feedInThemeList) {
+            feedIdMappingThemeName[feedId] = theme.name;
+        }
+    }
+
     let projectList = yield Project.find({ _id: { $in: projectIdList } });
-    projectList = _.sortBy(projectList, p => projectIdList.indexOf(p.id));
-    this.body = projectList || [];
+    let cleanProjectMap = {};
+    for (let project of projectList) {
+        project = project.toObject();
+        let feed = project.feed;
+        project.theme = feedIdMappingThemeName[feed];
+        project.isCollected = true;
+        cleanProjectMap[project_id] = project;
+    }
+    let cleanProjectList = [];
+    for(let id of projectIdList) {
+        cleanProjectList.push(cleanProjectMap[id]);
+    }
+    
+    this.body = cleanProjectList || [];
 });
 
 /**
