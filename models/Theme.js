@@ -4,6 +4,7 @@ const ThemeSchema = new mongoose.Schema({
     name: String,
     image: String,
     desc: String,
-    feeds: []
+    feeds: [],
+    sort: Number
 });
 module.exports = mongoConnection.getBoomMobileDB().model('Theme', ThemeSchema);

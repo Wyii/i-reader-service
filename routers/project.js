@@ -73,10 +73,7 @@ router.get('/api/project/list', function* () {
         filtered.query = {
             bool: {
                 should: [
-                    { match: { title: kw } },
-                    { term: { tags: kw } },
-                    { match: { desc: kw } },
-                    { match: { text: kw } }
+                    { match: { title: kw } }
                 ]
             }
         };

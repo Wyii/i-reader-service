@@ -58,11 +58,11 @@ router.get('/api/theme/list', function* () {
     themeCollectIdList = _.map(themeCollectIdList, t => t.tid);
     let result = [];
     for (let theme of themeList) {
-        let temp = { _id: theme._id, name: theme.name, desc: theme.desc, isCollect: false, count: themeCountBase[theme.name] + (themeCountMap[theme._id] || 0) };
+        let temp = { _id: theme._id, name: theme.name, desc: theme.desc, isCollect: false, sort: theme.sort, count: themeCountBase[theme.name] + (themeCountMap[theme._id] || 0) };
         if (themeCollectIdList.indexOf(theme._id.toString()) != -1) temp.isCollect = true;
         result.push(temp);
     }
-    this.body = result;
+    this.body = _.sortBy(result,['sort'])
 });
 
 /**
