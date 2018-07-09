@@ -121,15 +121,24 @@ router.get('/api/project/list', function* () {
 
     //主题收藏总数
     let themeCountList = yield ThemeCollect.aggregate([{ $group: { _id: "$tid", count: { $sum: 1 } } }]);
-    let themeCountMap = _.keyBy(themeCountList,"_id");
+    let themeCountMap = {};
+    for(let item of themeCountList) {
+        themeCountMap[item._id] = item.count;
+    }
 
     //文章收藏总数
     let projectCollectCountList = yield ProjectCollect.aggregate([{ $group: { _id: "$pid", count: { $sum: 1 } } }]);
-    let projectCollectCountMap = _.keyBy(projectCollectCountList,"_id");
+    let projectCollectCountMap = {};
+    for(let item of projectCollectCountList) {
+        projectCollectCountMap[item._id] = item.count;
+    }
 
     //文章转发总数
     let projectShareCountList = yield ProjectShare.aggregate([{ $group: { _id: "$pid", count: { $sum: 1 } } }]);
-    let projectShareCountMap = _.keyBy(projectShareCountList,"_id");
+    let projectShareCountMap = {};
+    for(let item of projectShareCountList) {
+        projectShareCountMap[item._id] = item.count;
+    }
 
     let cleanProjectList = [];
     let cleanThemeMapping = {};
