@@ -18,8 +18,8 @@ const { JSDOM } = jsdom;
 
 const defaultPageSize = 24;
 const Utils = require('../utils/Utils');
-const client = require('../utils/RedisConnection').get();
-const REDIS_SESSION_PREFIX = Utils.REDIS_SESSION_PREFIX;
+
+const themeCountBase = require('../config/themeCountBase.json');
 
 /**
  * @api {get} /api/project/list 获取资讯列表
@@ -113,6 +113,12 @@ router.get('/api/project/list', function* () {
     let themeCollectIdList = yield ThemeCollect.find({ openId: openId });
     themeCollectIdList = _.map(themeCollectIdList, t => t.tid);
 
+    let themeCountList = yield ThemeCollect.aggregate([{ $group: { _id: "tid", count: { $sum: 1 } } }]);
+    let themeCountMap = {};
+    for (let theme of themeCountList) {
+        themeCountMap[theme._id] = theme.count;
+    }
+
     let cleanProjectList = [];
     let cleanThemeMapping = {};
     for (let project of projectList) {
@@ -120,10 +126,12 @@ router.get('/api/project/list', function* () {
         let feed = project.feed;
         project.themeId = feedIdMappingThemeName[feed];
 
+        //增加主题信息
         let theme = themeIdMapping[project.themeId];
         let isCollect = false;
         if (themeCollectIdList.indexOf(theme._id.toString()) != -1) isCollect = true;
-        if (theme) cleanThemeMapping[project.themeId] = { _id: theme._id, name: theme.name, desc: theme.desc, isCollect: isCollect };
+        if (theme) cleanThemeMapping[project.themeId] = 
+        { _id: theme._id, name: theme.name, desc: theme.desc, isCollect: isCollect ,count: themeCountBase[theme.name] + (themeCountMap[theme._id] || 0)};
         
         project.isCollected = false;
         if (projectCollectIdList.indexOf(project._id.toString()) != -1) project.isCollected = true;

@@ -10,18 +10,7 @@ const defaultPageSize = 10;
 const _ = require('lodash');
 const parse = require('co-body');
 
-const themeCountBase = {
-    "游戏": 13731,
-    "设计艺术": 8141,
-    "创意文案": 7131,
-    "摄影美图": 23711,
-    "时尚美妆": 1321,
-    "旅行": 4712,
-    "电影电视剧": 7612,
-    "互联网科技": 5713,
-    "文艺生活": 871,
-    "最热资讯": 3712
-}
+const themeCountBase = require('../config/themeCountBase.json');
 
 /**
  * @api {get} /api/theme/list 主题列表
