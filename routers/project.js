@@ -100,9 +100,10 @@ router.get('/api/project/list', function* () {
     for (let theme of themeList) {
         let feedInThemeList = theme.feeds;
         for (let feedId of feedInThemeList) {
-            feedIdMappingThemeName[feedId] = theme.name;
+            feedIdMappingThemeName[feedId] = theme._id.toString();
         }
     }
+    let themeIdMapping = _.keyBy(themeList, function (item) { return item._id.toString() });
 
     let projectCollectIdList = yield ProjectCollect.find({ openId: openId });
     projectCollectIdList = _.map(projectCollectIdList, p => p.pid);
@@ -110,17 +111,20 @@ router.get('/api/project/list', function* () {
     let projectList = yield Project.find({ _id: { $in: projectIdList } });
 
     let cleanProjectList = [];
+    let cleanThemeMapping = {};
     for (let project of projectList) {
         project = project.toObject();
         let feed = project.feed;
-        project.theme = feedIdMappingThemeName[feed];
+        project.themeId = feedIdMappingThemeName[feed];
+        let theme = themeIdMapping[project.themeId];
+        if (theme) cleanThemeMapping[project.themeId] = { _id: theme._id, name: theme.name, desc: theme.desc };
         project.isCollected = false;
         if (projectCollectIdList.indexOf(project._id.toString()) != -1) project.isCollected = true;
         cleanProjectList.push(project);
     }
 
     cleanProjectList = _.sortBy(cleanProjectList, p => projectIdList.indexOf(p.id));
-    this.body = cleanProjectList || [];
+    this.body = { projectList: cleanProjectList, themeList: cleanThemeMapping };
 });
 
 /**
