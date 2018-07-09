@@ -4,6 +4,7 @@ const Project = require('../models/Project');
 const ProjectText = require('../models/ProjectText');
 const ProjectCollect = require('../models/MobileProjectCollect');
 const ProjectNote = require('../models/MobileProjectNote');
+const ProjectShare = require('../models/MobileProjectShare');
 const ThemeCollect = require('../models/ThemeCollect');
 const Theme = require('../models/Theme');
 const DailyNews = require('../models/DailyNews');
@@ -17,9 +18,24 @@ const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 
 const defaultPageSize = 24;
-const Utils = require('../utils/Utils');
+const co = require('co');
 
 const themeCountBase = require('../config/themeCountBase.json');
+
+let __feedIdMappingThemeId__;
+let __themeIdMapping__;
+
+co(function* () {
+    let themeList = yield Theme.find({});
+    __feedIdMappingThemeId__ = {};
+    for (let theme of themeList) {
+        let feedInThemeList = theme.feeds;
+        for (let feedId of feedInThemeList) {
+            __feedIdMappingThemeId__[feedId] = theme._id.toString();
+        }
+    }
+    __themeIdMapping__ = _.keyBy(themeList, function (item) { return item._id.toString() });
+});
 
 /**
  * @api {get} /api/project/list 获取资讯列表
@@ -93,54 +109,68 @@ router.get('/api/project/list', function* () {
     })).hits.hits;
     projectIdList = _.map(projectIdList, p => p._id);
 
-
-    //查询主题名称
-    let themeList = yield Theme.find({});
-    let feedIdMappingThemeName = {};
-    for (let theme of themeList) {
-        let feedInThemeList = theme.feeds;
-        for (let feedId of feedInThemeList) {
-            feedIdMappingThemeName[feedId] = theme._id.toString();
-        }
-    }
-    let themeIdMapping = _.keyBy(themeList, function (item) { return item._id.toString() });
-
+    //文章是否收藏
     let projectCollectIdList = yield ProjectCollect.find({ openId: openId });
     projectCollectIdList = _.map(projectCollectIdList, p => p.pid);
 
     let projectList = yield Project.find({ _id: { $in: projectIdList } });
 
+    //主题是否收藏
     let themeCollectIdList = yield ThemeCollect.find({ openId: openId });
     themeCollectIdList = _.map(themeCollectIdList, t => t.tid);
 
-    let themeCountList = yield ThemeCollect.aggregate([{ $group: { _id: "tid", count: { $sum: 1 } } }]);
-    let themeCountMap = {};
-    for (let theme of themeCountList) {
-        themeCountMap[theme._id] = theme.count;
-    }
+    //主题收藏总数
+    let themeCountList = yield ThemeCollect.aggregate([{ $group: { _id: "$tid", count: { $sum: 1 } } }]);
+    let themeCountMap = _.keyBy(themeCountList,"_id");
+
+    //文章收藏总数
+    let projectCollectCountList = yield ProjectCollect.aggregate([{ $group: { _id: "$pid", count: { $sum: 1 } } }]);
+    let projectCollectCountMap = _.keyBy(projectCollectCountList,"_id");
+
+    //文章转发总数
+    let projectShareCountList = yield ProjectShare.aggregate([{ $group: { _id: "$pid", count: { $sum: 1 } } }]);
+    let projectShareCountMap = _.keyBy(projectShareCountList,"_id");
 
     let cleanProjectList = [];
     let cleanThemeMapping = {};
     for (let project of projectList) {
         project = project.toObject();
         let feed = project.feed;
-        project.themeId = feedIdMappingThemeName[feed];
+        project.themeId = __feedIdMappingThemeId__[feed];
 
         //增加主题信息
-        let theme = themeIdMapping[project.themeId];
+        let theme = __themeIdMapping__[project.themeId];
         let isCollect = false;
         if (themeCollectIdList.indexOf(theme._id.toString()) != -1) isCollect = true;
-        if (theme) cleanThemeMapping[project.themeId] = 
-        { _id: theme._id, name: theme.name, desc: theme.desc, isCollect: isCollect ,count: themeCountBase[theme.name] + (themeCountMap[theme._id] || 0)};
-        
+        if (theme) cleanThemeMapping[project.themeId] =
+            { _id: theme._id, name: theme.name, desc: theme.desc, isCollect: isCollect, count: themeCountBase[theme.name] + (themeCountMap[theme._id] || 0) };
+
         project.isCollected = false;
         if (projectCollectIdList.indexOf(project._id.toString()) != -1) project.isCollected = true;
+
+        project.collectCount = projectCollectCountMap[project._id] || 0;
+        project.shareCount = projectShareCountMap[project._id] || 0;
+
         cleanProjectList.push(project);
     }
 
     cleanProjectList = _.sortBy(cleanProjectList, p => projectIdList.indexOf(p.id));
     this.body = { projectList: cleanProjectList, themeList: cleanThemeMapping };
 });
+
+function* __getThemeIdByFeed__(feed) {
+    if (!feedIdMappingTheme) {
+        let themeList = yield Theme.find({});
+        let feedIdMappingThemeName = {};
+        for (let theme of themeList) {
+            let feedInThemeList = theme.feeds;
+            for (let feedId of feedInThemeList) {
+                feedIdMappingThemeName[feedId] = theme._id.toString();
+            }
+        }
+        let themeIdMapping = _.keyBy(themeList, function (item) { return item._id.toString() });
+    }
+}
 
 /**
  * @api {post} /api/project/toggleCollect 收藏/取消收藏
@@ -251,7 +281,27 @@ router.post('/api/project/note', function* () {
         yield new ProjectNote({ _id: uid, openId: openId, pid: id, notedDate: new Date(), text: text, note: note, domIndex: domIndex }).save();
         this.body = { status: true, operator: 'add' };
     }
-
+});
+/**
+ * @api {post} /api/project/share 分享
+ * @apiName share
+ * @apiGroup Project
+ *
+ * @apiParamExample {JSON} Request-Example:
+ * {id:'文章id',type:'img/chat'}
+ * @apiHeader {String} sessionid
+  * @apiSuccessExample {json} Success-Response:
+ * {operator:'add'}
+ * @apiErrorExample {json} Error-Response:
+ * {errmsg:'not fount'}
+ */
+router.post('/api/project/share', function* () {
+    let data = yield parse(this);
+    let openId = this.openId;
+    let id = data.id;
+    let type = data.type;
+    yield new ProjectShare({ openId: openId, pid: id, notedDate: new Date(), type: type }).save();
+    this.body = { status: true, operator: 'add' };
 });
 
 function* getNotes(openId, pid) {
