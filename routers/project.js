@@ -122,21 +122,21 @@ router.get('/api/project/list', function* () {
     //主题收藏总数
     let themeCountList = yield ThemeCollect.aggregate([{ $group: { _id: "$tid", count: { $sum: 1 } } }]);
     let themeCountMap = {};
-    for(let item of themeCountList) {
+    for (let item of themeCountList) {
         themeCountMap[item._id] = item.count;
     }
 
     //文章收藏总数
     let projectCollectCountList = yield ProjectCollect.aggregate([{ $group: { _id: "$pid", count: { $sum: 1 } } }]);
     let projectCollectCountMap = {};
-    for(let item of projectCollectCountList) {
+    for (let item of projectCollectCountList) {
         projectCollectCountMap[item._id] = item.count;
     }
 
     //文章转发总数
     let projectShareCountList = yield ProjectShare.aggregate([{ $group: { _id: "$pid", count: { $sum: 1 } } }]);
     let projectShareCountMap = {};
-    for(let item of projectShareCountList) {
+    for (let item of projectShareCountList) {
         projectShareCountMap[item._id] = item.count;
     }
 
@@ -152,7 +152,13 @@ router.get('/api/project/list', function* () {
         let isCollect = false;
         if (themeCollectIdList.indexOf(theme._id.toString()) != -1) isCollect = true;
         if (theme) cleanThemeMapping[project.themeId] =
-            { _id: theme._id, name: theme.name, desc: theme.desc, isCollect: isCollect, count: themeCountBase[theme.name] + (themeCountMap[theme._id] || 0) };
+            {
+                _id: theme._id,
+                name: theme.name,
+                desc: theme.desc,
+                isCollect: isCollect,
+                count: themeCountBase[theme.name] + (themeCountMap[theme._id] || 0)
+            };
 
         project.isCollected = false;
         if (projectCollectIdList.indexOf(project._id.toString()) != -1) project.isCollected = true;
@@ -166,20 +172,6 @@ router.get('/api/project/list', function* () {
     cleanProjectList = _.sortBy(cleanProjectList, p => projectIdList.indexOf(p.id));
     this.body = { projectList: cleanProjectList, themeList: cleanThemeMapping };
 });
-
-function* __getThemeIdByFeed__(feed) {
-    if (!feedIdMappingTheme) {
-        let themeList = yield Theme.find({});
-        let feedIdMappingThemeName = {};
-        for (let theme of themeList) {
-            let feedInThemeList = theme.feeds;
-            for (let feedId of feedInThemeList) {
-                feedIdMappingThemeName[feedId] = theme._id.toString();
-            }
-        }
-        let themeIdMapping = _.keyBy(themeList, function (item) { return item._id.toString() });
-    }
-}
 
 /**
  * @api {post} /api/project/toggleCollect 收藏/取消收藏
@@ -246,15 +238,13 @@ router.get('/api/project/detail/:id', function* () {
     let text = yield ProjectText.findOne({ _id: project._id });
     text = text && text.text;
     json.text = text;
-    let noText = (!text && text == "null" && text == undefined);
+    let noText = (!text || text == "null" || text == undefined);
     if (noText) {
         json.text = "";
     } else if (project.type === "wechat") {
         const dom = new JSDOM(text);
-        // const $ = cheerio.load(text);
-        // text = $('#js_content').wrap('<p/>').parent().html();
-        // json.text = unescape(text.replace(/&#x/g, '%u').replace(/;/g, '')).replace(/%uA0/g, '');
-        json.text = dom.window.document.querySelector("#js_content").outerHTML;
+        if (dom)
+            json.text = dom.window.document.querySelector("#js_content").outerHTML;
     }
     json.likeProjects = yield likeProjects(project);
     json.notes = yield getNotes(openId, project._id);
@@ -321,7 +311,11 @@ function* getNotes(openId, pid) {
 
 
 function* likeProjects(project) {
-    let mustFilter = [{ term: { isDel: 0 } }, { term: { type: 'wechat' } }, { term: { feed: project.feed } }];
+
+    let themeId = __feedIdMappingThemeId__[project.feed];
+    let theme = __themeIdMapping__[themeId];
+
+    let mustFilter = [{ term: { isDel: 0 } }, { term: { type: 'wechat' } }, { terms: { feed: theme.feeds } }];
     let filtered = {
         filter: {
             bool: {
