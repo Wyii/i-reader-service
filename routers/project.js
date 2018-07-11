@@ -115,17 +115,6 @@ router.get('/api/project/list', function* () {
 
     let projectList = yield Project.find({ _id: { $in: projectIdList } });
 
-    //主题是否收藏
-    let themeCollectIdList = yield ThemeCollect.find({ openId: openId });
-    themeCollectIdList = _.map(themeCollectIdList, t => t.tid);
-
-    //主题收藏总数
-    let themeCountList = yield ThemeCollect.aggregate([{ $group: { _id: "$tid", count: { $sum: 1 } } }]);
-    let themeCountMap = {};
-    for (let item of themeCountList) {
-        themeCountMap[item._id] = item.count;
-    }
-
     //文章收藏总数
     let projectCollectCountList = yield ProjectCollect.aggregate([{ $group: { _id: "$pid", count: { $sum: 1 } } }]);
     let projectCollectCountMap = {};
@@ -144,21 +133,11 @@ router.get('/api/project/list', function* () {
     let cleanThemeMapping = {};
     for (let project of projectList) {
         project = project.toObject();
-        let feed = project.feed;
-        project.themeId = __feedIdMappingThemeId__[feed];
 
-        //增加主题信息
-        let theme = __themeIdMapping__[project.themeId];
-        let isCollect = false;
-        if (themeCollectIdList.indexOf(theme._id.toString()) != -1) isCollect = true;
-        if (theme) cleanThemeMapping[project.themeId] =
-            {
-                _id: theme._id,
-                name: theme.name,
-                desc: theme.desc,
-                isCollect: isCollect,
-                count: themeCountBase[theme.name] + (themeCountMap[theme._id] || 0)
-            };
+        addThemeIdToProject(project);
+
+        let themeInfo = yield getThemeByProject(project.themeId, openId);
+        cleanThemeMapping = Object.assign(cleanThemeMapping, themeInfo);
 
         project.isCollected = false;
         if (projectCollectIdList.indexOf(project._id.toString()) != -1) project.isCollected = true;
@@ -246,7 +225,19 @@ router.get('/api/project/detail/:id', function* () {
         if (dom)
             json.text = dom.window.document.querySelector("#js_content").outerHTML;
     }
-    json.likeProjects = yield likeProjects(project);
+    // json.likeProjects = yield likeProjects(project);
+    let cleanThemeMapping = {};
+    let cleanLikeProjectList = [];
+    let likeProjectList = yield likeProjects(project);
+    for (let project of likeProjectList) {
+        project = project.toObject();
+        addThemeIdToProject(project);
+        let themeInfo = yield getThemeByProject(project.themeId, openId);
+        cleanThemeMapping = Object.assign(cleanThemeMapping, themeInfo);
+        cleanLikeProjectList.push(project);
+    }
+    json.likeProjects = { projectList: cleanLikeProjectList ,themeList:cleanThemeMapping};
+
     json.notes = yield getNotes(openId, project._id);
     this.body = json;
 });
@@ -311,7 +302,6 @@ function* getNotes(openId, pid) {
 
 
 function* likeProjects(project) {
-
     let themeId = __feedIdMappingThemeId__[project.feed];
     let theme = __themeIdMapping__[themeId];
 
@@ -339,7 +329,47 @@ function* likeProjects(project) {
 
     let projectList = yield Project.find({ _id: { $in: projectIdList } });
 
+    // let cleanThemeMapping = {};
+    // for(let project of projectList) {
+    //     project = project.toObject();
+    //     addThemeIdToProject(project);
+    //     let themeInfo = yield getThemeByProject(project.themeId, openId);
+    //     cleanThemeMapping = Object.assign(cleanThemeMapping, themeInfo);
+    // }
+
     return projectList;
+}
+
+function* getThemeByProject(themeId, openId) {
+    //主题是否收藏
+    let themeCollectIdList = yield ThemeCollect.find({ openId: openId });
+    themeCollectIdList = _.map(themeCollectIdList, t => t.tid);
+
+    //主题收藏总数
+    let themeCountList = yield ThemeCollect.aggregate([{ $group: { _id: "$tid", count: { $sum: 1 } } }]);
+    let themeCountMap = {};
+    for (let item of themeCountList) {
+        themeCountMap[item._id] = item.count;
+    }
+
+    let cleanThemeMapping = {};
+    //增加主题信息
+    let theme = __themeIdMapping__[themeId];
+    let isCollect = false;
+    if (themeCollectIdList.indexOf(theme._id.toString()) != -1) isCollect = true;
+    if (theme) cleanThemeMapping[themeId] =
+        {
+            _id: theme._id,
+            name: theme.name,
+            desc: theme.desc,
+            isCollect: isCollect,
+            count: themeCountBase[theme.name] + (themeCountMap[theme._id] || 0)
+        };
+    return cleanThemeMapping;
+}
+
+function addThemeIdToProject(project) {
+    project.themeId = __feedIdMappingThemeId__[project.feed];
 }
 
 module.exports = router;
