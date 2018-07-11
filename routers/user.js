@@ -27,54 +27,6 @@ router.get('/api/user/info', function* () {
 });
 
 /**
- * @api {get} /api/projectCollect/list 收藏列表
- * @apiName project collect list
- * @apiGroup User
- * @apiHeader {String} sessionid
- * @apiParam {Number{1..40}} page =1 分页参数
- * @apiSuccessExample {json} Success-Response:
- * [{}]
- */
-router.get('/api/projectCollect/list', function* () {
-    let page = parseInt(this.query.page) || 1;
-    if (page < 1) {
-        page = 1;
-    } else if (page > 40) {
-        this.body = [];
-        return;
-    }
-    let offset = (page - 1) * defaultPageSize;
-    let openId = this.openId;
-    let projectIdList = yield ProjectCollect.find({ openId: openId }).sort({ collectedDate: -1 }).limit(defaultPageSize).skip(offset);
-    projectIdList = _.map(projectIdList, p => p.pid);
-
-    let themeList = yield Theme.find({});
-    let feedIdMappingThemeName = {};
-    for (let theme of themeList) {
-        let feedInThemeList = theme.feeds;
-        for (let feedId of feedInThemeList) {
-            feedIdMappingThemeName[feedId] = theme.name;
-        }
-    }
-
-    let projectList = yield Project.find({ _id: { $in: projectIdList } });
-    let cleanProjectMap = {};
-    for (let project of projectList) {
-        project = project.toObject();
-        let feed = project.feed;
-        project.theme = feedIdMappingThemeName[feed];
-        project.isCollected = true;
-        cleanProjectMap[project._id] = project;
-    }
-    let cleanProjectList = [];
-    for(let id of projectIdList) {
-        cleanProjectList.push(cleanProjectMap[id]);
-    }
-    
-    this.body = cleanProjectList || [];
-});
-
-/**
  * @api {get} /api/projectNote/list 标注列表
  * @apiName project note list
  * @apiGroup User

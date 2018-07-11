@@ -236,7 +236,7 @@ router.get('/api/project/detail/:id', function* () {
         cleanThemeMapping = Object.assign(cleanThemeMapping, themeInfo);
         cleanLikeProjectList.push(project);
     }
-    json.likeProjects = { projectList: cleanLikeProjectList ,themeList:cleanThemeMapping};
+    json.likeProjects = { projectList: cleanLikeProjectList, themeList: cleanThemeMapping };
 
     json.notes = yield getNotes(openId, project._id);
     this.body = json;
@@ -294,6 +294,58 @@ router.post('/api/project/share', function* () {
     this.body = { status: true, operator: 'add' };
 });
 
+/**
+ * @api {get} /api/projectCollect/list 收藏列表
+ * @apiName project collect list
+ * @apiGroup User
+ * @apiHeader {String} sessionid
+ * @apiParam {Number{1..40}} page =1 分页参数
+ * @apiSuccessExample {json} Success-Response:
+ * [{}]
+ */
+router.get('/api/projectCollect/list', function* () {
+    let page = parseInt(this.query.page) || 1;
+    if (page < 1) {
+        page = 1;
+    } else if (page > 40) {
+        this.body = [];
+        return;
+    }
+    let offset = (page - 1) * defaultPageSize;
+    let openId = this.openId;
+    let projectIdList = yield ProjectCollect.find({ openId: openId }).sort({ collectedDate: -1 }).limit(defaultPageSize).skip(offset);
+    projectIdList = _.map(projectIdList, p => p.pid);
+
+    let themeList = yield Theme.find({});
+    let feedIdMappingThemeName = {};
+    for (let theme of themeList) {
+        let feedInThemeList = theme.feeds;
+        for (let feedId of feedInThemeList) {
+            feedIdMappingThemeName[feedId] = theme.name;
+        }
+    }
+
+    let projectList = yield Project.find({ _id: { $in: projectIdList } });
+    let cleanProjectMap = {};
+    let cleanThemeMapping = {};
+    for (let project of projectList) {
+        project = project.toObject();
+
+        addThemeIdToProject(project);
+        let themeInfo = yield getThemeByProject(project.themeId, openId);
+        cleanThemeMapping = Object.assign(cleanThemeMapping, themeInfo);
+
+        project.isCollected = true;
+        cleanProjectMap[project._id] = project;
+    }
+    let cleanProjectList = [];
+    for (let id of projectIdList) {
+        cleanProjectList.push(cleanProjectMap[id]);
+    }
+
+    this.body = { projectList: cleanProjectList, themeList: cleanThemeMapping };
+});
+
 function* getNotes(openId, pid) {
     let projectNoteIndexList = yield ProjectNote.find({ openId, pid });
     projectNoteIndexList = _.map(projectNoteIndexList, n => n.domIndex);
@@ -329,16 +381,10 @@ function* likeProjects(project) {
 
     let projectList = yield Project.find({ _id: { $in: projectIdList } });
 
-    // let cleanThemeMapping = {};
-    // for(let project of projectList) {
-    //     project = project.toObject();
-    //     addThemeIdToProject(project);
-    //     let themeInfo = yield getThemeByProject(project.themeId, openId);
-    //     cleanThemeMapping = Object.assign(cleanThemeMapping, themeInfo);
-    // }
-
     return projectList;
 }
+
+
 
 function* getThemeByProject(themeId, openId) {
     //主题是否收藏
