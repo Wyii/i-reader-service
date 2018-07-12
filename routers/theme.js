@@ -38,7 +38,7 @@ router.get('/api/theme/list', function* () {
     let openId = this.openId;
     let themeList = yield Theme.find({}).limit(defaultPageSize).skip(skip);
 
-    let themeCountList = yield ThemeCollect.aggregate([{ $group: { _id: "tid", count: { $sum: 1 } } }]);
+    let themeCountList = yield ThemeCollect.aggregate([{ $group: { _id: "$tid", count: { $sum: 1 } } }]);
     let themeCountMap = {};
     for (let theme of themeCountList) {
         themeCountMap[theme._id] = theme.count;
