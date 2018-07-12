@@ -10,7 +10,7 @@ const moment = require('moment');
 
 
 router.get('/api/tool/initTheme', function* () {
-    let themeJson = require('../config/theme.json');
+    let themeJson = require('../data/theme.json');
     for (let item of themeJson) {
         let name = item.name
         let theme = yield Theme.findOne({ name: name });
@@ -26,7 +26,7 @@ router.get('/api/tool/initTheme', function* () {
 });
 
 router.get('/api/tool/initDailyNews', function* () {
-    let dailyNewsJson = require('../config/dailyNews.json');
+    let dailyNewsJson = require('../data/dailyNews.json');
     for (let item of dailyNewsJson) {
         let type = item.type;
         let status = item.status;

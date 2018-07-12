@@ -10,7 +10,7 @@ const defaultPageSize = 10;
 const _ = require('lodash');
 const parse = require('co-body');
 
-const themeCountBase = require('../config/themeCountBase.json');
+const themeCountBase = require('../data/themeCountBase.json');
 
 /**
  * @api {get} /api/theme/list 主题列表

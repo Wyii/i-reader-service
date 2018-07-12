@@ -20,7 +20,7 @@ const { JSDOM } = jsdom;
 const defaultPageSize = 24;
 const co = require('co');
 
-const themeCountBase = require('../config/themeCountBase.json');
+const themeCountBase = require('../data/themeCountBase.json');
 
 let __feedIdMappingThemeId__;
 let __themeIdMapping__;

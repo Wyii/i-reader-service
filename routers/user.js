@@ -8,7 +8,7 @@ const ProjectCollect = require('../models/MobileProjectCollect');
 const defaultPageSize = 24;
 const _ = require('lodash');
 
-const themeCountBase = require('../config/themeCountBase.json');
+const themeCountBase = require('../data/themeCountBase.json');
 
 /**
  * @api {get} /api/user/info 用户信息
