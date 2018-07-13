@@ -45,6 +45,11 @@ router.get('/api/tool/initDailyNews', function* () {
     }
     console.log('update dailyNews');
     this.body = { info: 'update dailyNews' };
-})
+});
+
+// router.get('/mpqr.png',function* (){
+//     this.type = 'image/png'
+//     this.body = 
+// })
 
 module.exports = router;
