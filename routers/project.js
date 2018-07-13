@@ -82,10 +82,14 @@ router.get('/api/project/list', function* () {
         let dailyNewsIdList = yield DailyNews.find({ type: 'feed', status: 1 });
         feedIdList = _.map(dailyNewsIdList, t => t.id);
     }
-    mustFilter.push({ terms: { feed: feedIdList } });
 
     let kw = this.query.keyword;
     if (kw) {
+        let themeList = yield Theme.find({});
+        feedIdList = [];
+        for(let theme of themeList) {
+            feedIdList = _.concat(feedIdList, theme.feeds);
+        }
         filtered.query = {
             bool: {
                 should: [
@@ -95,6 +99,8 @@ router.get('/api/project/list', function* () {
         };
         sort.push({ "_score": { "order": "desc" } });
     }
+
+    mustFilter.push({ terms: { feed: feedIdList } });
 
     sort.push({ "datePublished": { "order": "desc" } });
 
