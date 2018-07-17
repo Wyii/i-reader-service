@@ -8,7 +8,8 @@ const router = require('koa-router')();
 const moment = require('moment');
 const {post} = require('../common/Fetch');
 const config = require('config');
-
+const parse = require('co-body');
+const rp = require('request-promise');
 
 router.get('/api/tool/initTheme', function* () {
     let themeJson = require('../data/theme.json');
@@ -59,10 +60,34 @@ router.get('/api/tool/initDailyNews', function* () {
   * @apiSuccessExample {json} Success-Response:
  * @apiErrorExample {json} Error-Response:
  */
+const fs = require('fs');
+
 router.post('/api/common/weqr', function* () {
     let data = yield parse(this);
-    let result = yield post('/wxa/getwxacodeunlimit', {id: config.get('weixin.appId')}, data);
-    this.body = result;
+    let opts = {
+        method: 'POST',
+        qs: {id: config.get('weixin.appId')},
+        url: config.get('weixin.api') + '/wxa/getwxacodeunlimit',
+        json: data
+    };
+    let body = yield rp(opts);
+    var array = '';
+    this.header = {'Content-Type': 'image/jpeg'}
+    this.body = body;
+});
+
+router.get('/api/common/weqr', function* () {
+    let scene = this.query.scene;
+    let page = this.query.page;
+    let opts = {
+        method: 'POST',
+        qs: {id: config.get('weixin.appId')},
+        url: config.get('weixin.api') + '/wxa/getwxacodeunlimit',
+        json: {scene,page}
+    };
+    let body = yield rp(opts);
+    this.header = {'Content-Type': 'image/jpeg'}
+    this.body = body;
 });
 
 

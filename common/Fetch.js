@@ -39,6 +39,7 @@ function * parseRes(opts) {
     if(typeof body == 'object') {
         return body;
     }
+    console.log(body)
     return JSON.parse(body);
 }
 
