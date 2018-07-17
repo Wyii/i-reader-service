@@ -9,6 +9,7 @@
     },
     "weixin": {
       "appId": "appId",
-      "appSecret": "appSecret"
+      "appSecret": "appSecret",
+      "api":"localhost:10001"
     }
   }

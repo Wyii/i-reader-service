@@ -2,11 +2,12 @@
  * 该路由包含了一些后台所需的处理接口 
 */
 
-const co = require('co');
 const Theme = require('../models/Theme');
 const DailyNews = require('../models/DailyNews');
 const router = require('koa-router')();
 const moment = require('moment');
+const {post} = require('../common/Fetch');
+const config = require('config');
 
 
 router.get('/api/tool/initTheme', function* () {
@@ -47,9 +48,22 @@ router.get('/api/tool/initDailyNews', function* () {
     this.body = { info: 'update dailyNews' };
 });
 
-// router.get('/mpqr.png',function* (){
-//     this.type = 'image/png'
-//     this.body = 
-// })
+/**
+ * @api {post} /api/common/weqr 动态二维码
+ * @apiName weqr
+ * @apiGroup Common
+ *
+ * @apiParamExample {JSON} Request-Example:
+ * {scene:"",page:"",width:"",auto_color:"",line_color:"",is_hyaline:""}
+ * @apiHeader {String} sessionid
+  * @apiSuccessExample {json} Success-Response:
+ * @apiErrorExample {json} Error-Response:
+ */
+router.post('/api/common/weqr', function* () {
+    let data = yield parse(this);
+    let result = yield post('/wxa/getwxacodeunlimit', {id: config.get('weixin.appId')}, data);
+    this.body = result;
+});
+
 
 module.exports = router;

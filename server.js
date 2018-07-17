@@ -30,6 +30,9 @@ esFactory.init({ host: config.get('es') || 'localhost:9200' });
 co(function* () {
     const RedisConnection = require('./utils/RedisConnection');
     yield RedisConnection.init();
+
+    const Fetch = require('./common/Fetch');
+    yield Fetch.init(config.get("weixin.api"));
 });
 
 require('./routers')(server);
