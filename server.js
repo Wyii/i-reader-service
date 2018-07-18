@@ -9,7 +9,7 @@ server.use(function* (next) {
     try {
         yield next;
     } catch (e) {
-        console.log(e)
+        console.log("error", e)
         this.body = { 'status': 'error', msg: 'system inner error.' };
     }
 });
@@ -30,9 +30,6 @@ esFactory.init({ host: config.get('es') || 'localhost:9200' });
 co(function* () {
     const RedisConnection = require('./utils/RedisConnection');
     yield RedisConnection.init();
-
-    const Fetch = require('./common/Fetch');
-    yield Fetch.init(config.get("weixin.api"));
 });
 
 require('./routers')(server);
