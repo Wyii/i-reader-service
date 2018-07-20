@@ -58,7 +58,7 @@ router.get('/api/project/list', function* () {
     }
 
     let es = ESClientFactory.get();
-    let mustFilter = [{ term: { isDel: 0 } }, { term: { type: 'wechat' } }];
+    let mustFilter = [{ term: { isDel: 0 } }, { term: { type: 'wechat' } },{ term: { idx: "1" } }];
     let filtered = { filter: { bool: { must: mustFilter } } };
     let query = { filtered: filtered };
     let sort = [];
