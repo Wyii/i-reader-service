@@ -58,7 +58,7 @@ router.get('/api/project/list', function* () {
     }
 
     let es = ESClientFactory.get();
-    let mustFilter = [{ term: { isDel: 0 } }, { term: { type: 'wechat' } },{ term: { idx: "1" } }];
+    let mustFilter = [{ term: { isDel: 0 } }, { term: { type: 'wechat' } }, { term: { idx: "1" } }];
     let filtered = { filter: { bool: { must: mustFilter } } };
     let query = { filtered: filtered };
     let sort = [];
@@ -87,13 +87,13 @@ router.get('/api/project/list', function* () {
     if (kw) {
         let themeList = yield Theme.find({});
         feedIdList = [];
-        for(let theme of themeList) {
+        for (let theme of themeList) {
             feedIdList = _.concat(feedIdList, theme.feeds);
         }
         filtered.query = {
             bool: {
                 should: [
-                    { match: { title: kw } }
+                    { match_phrase: { title: kw } }
                 ]
             }
         };
@@ -103,8 +103,8 @@ router.get('/api/project/list', function* () {
     mustFilter.push({ terms: { feed: feedIdList } });
 
     sort.push({ "datePublished": { "order": "desc" } });
-
     let offset = (page - 1) * defaultPageSize;
+
     let projectIdList = (yield es.search({
         index: 'boom',
         type: 'project',
